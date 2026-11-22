@@ -1,1036 +1,835 @@
 "use strict";
 
-const STORAGE_KEY = "pythonRecall.v3";
-const SET_SIZE = 10;
-const NEED = 2;
+const KEY = "jarvisBuilder.v1";
 
-function lesson(id, topic, title, explain, exampleLines, shown, task, answerLines) {
-  return {
-    id: id,
-    topic: topic,
-    title: title,
-    explain: explain,
-    example: exampleLines.join("\n"),
-    shown: shown,
-    task: task,
-    code: answerLines.join("\n")
-  };
+function lines(list) {
+  return list.join("\n");
 }
 
-const LESSONS = [
-  lesson(
-    1,
-    "Displaying text",
-    "This is how to display text",
-    "print sends text to the screen. The words go inside quotes. Those quotes are part of the command, and they do not appear on the screen.",
-    ['print("Hello")'],
-    "Hello",
-    "Type a command that displays Goodbye.",
-    ['print("Goodbye")']
-  ),
-  lesson(
-    2,
-    "Displaying text",
-    "This is how to display a second line",
-    "Each print starts a new line after it finishes. The first call shows Hello, then Python moves down, and the second call shows Python on the next line.",
-    ['print("Hello")', 'print("Python")'],
-    "Hello\nPython",
-    "Type two commands. The first displays Red. The second displays Blue.",
-    ['print("Red")', 'print("Blue")']
-  ),
-  lesson(
-    3,
-    "Displaying text",
-    "This is how to display a number",
-    "Text needs quotes. A number does not. The example displays a label, then the number 21 on the next line.",
-    ['print("The total is")', "print(21)"],
-    "The total is\n21",
-    "Display the words The score is, then display the number 8 on the next line.",
-    ['print("The score is")', "print(8)"]
-  ),
-  lesson(
-    4,
-    "Displaying text",
-    "This is how to display two pieces of text on one line",
-    "A comma between values inside print places one space between them. Both pieces stay on the same line.",
-    ['print("Ada", "Lovelace")'],
-    "Ada Lovelace",
-    "Type a command that displays Grace and Hopper on one line, with a space between them.",
-    ['print("Grace", "Hopper")']
-  ),
-  lesson(
-    5,
-    "Displaying text",
-    "This is how to stay on the same line",
-    "Normally print ends by moving to the next line. end=\" \" replaces that move with a single space, so the next print continues on the same line.",
-    ['print("Hello", end=" ")', 'print("there")'],
-    "Hello there",
-    "Display Good, stay on that line with a space, then display morning. The screen should show Good morning.",
-    ['print("Good", end=" ")', 'print("morning")']
-  ),
-  lesson(
-    6,
-    "Displaying text",
-    "This is how to choose what goes between items",
-    "sep is the separator print puts between items. sep=\", \" uses a comma and a space instead of the normal single space.",
-    ['print("cat", "dog", "bird", sep=", ")'],
-    "cat, dog, bird",
-    "Display tea, cake, and milk on one line, with a comma and a space between them.",
-    ['print("tea", "cake", "milk", sep=", ")']
-  ),
-  lesson(
-    7,
-    "Displaying text",
-    "This is how to display a quote inside text",
-    "A quote you want to show on the screen needs a backslash in front of it. The backslash itself is not displayed.",
-    ['print("She said \\"Hi\\"")'],
-    'She said "Hi"',
-    "Type a command that displays He said \"Bye\", including those quotation marks.",
-    ['print("He said \\"Bye\\"")']
-  ),
-  lesson(
-    8,
-    "Displaying text",
-    "This is how to start a new line inside one piece of text",
-    "\\n is one special character that means start a new line. One print can therefore show two lines.",
-    ['print("First line\\nSecond line")'],
-    "First line\nSecond line",
-    "Type one command that displays Left on one line and Right on the next line.",
-    ['print("Left\\nRight")']
-  ),
-  lesson(
-    9,
-    "Displaying text",
-    "This is how to write a note that is not displayed",
-    "A line that starts with # is a comment. Python skips it, so it never appears on the screen. Only the print line produces text.",
-    ["# This note is for a person.", 'print("This line is shown")'],
-    "This line is shown",
-    "Write a comment that says Keep this note, then a command that displays Ready.",
-    ["# Keep this note", 'print("Ready")']
-  ),
-  lesson(
-    10,
-    "Displaying text",
-    "This is how to display a blank line",
-    "print() with nothing inside displays no words, then moves down. Between two messages, that looks like a blank line.",
-    ['print("Welcome")', "print()", 'print("Let us begin")'],
-    "Welcome\n\nLet us begin",
-    "Display Start, then a blank line, then Finish.",
-    ['print("Start")', "print()", 'print("Finish")']
-  ),
-  lesson(
-    11,
-    "Variables",
-    "This is how to make a variable",
-    "A variable is a name that holds a value. The name has no quotes. The text it holds does. print(name) displays the stored text, not the word name.",
-    ['name = "Ada"', "print(name)"],
-    "Ada",
-    "Make a variable called city that holds Paris, then display it.",
-    ['city = "Paris"', "print(city)"]
-  ),
-  lesson(
-    12,
-    "Variables",
-    "This is how to change a variable",
-    "Using the same name again replaces the old value. After the second line, only the new value remains.",
-    ['name = "Ada"', 'name = "Grace"', "print(name)"],
-    "Grace",
-    "Make a variable called city that first holds Paris, then change it to Rome, then display it.",
-    ['city = "Paris"', 'city = "Rome"', "print(city)"]
-  ),
-  lesson(
-    13,
-    "Variables",
-    "This is how to store text and a number",
-    "One name can hold text, and another can hold a number. They stay separate. A number has no quotes.",
-    ['city = "Paris"', "year = 2026", "print(city)", "print(year)"],
-    "Paris\n2026",
-    "Store London in a variable called place and 1800 in a variable called year. Display place, then year.",
-    ['place = "London"', "year = 1800", "print(place)", "print(year)"]
-  ),
-  lesson(
-    14,
-    "Variables",
-    "This is how to update a number",
-    "The right side runs first. score + 5 uses the current value, then the result is stored back into score.",
-    ["score = 10", "score = score + 5", "print(score)"],
-    "15",
-    "Start points at 4. Add 3 with points = points + 3, then display points.",
-    ["points = 4", "points = points + 3", "print(points)"]
-  ),
-  lesson(
-    15,
-    "Variables",
-    "This is how to add onto a variable in one step",
-    "+= is the short way to add a number and save it back into the same name.",
-    ["score = 10", "score += 5", "print(score)"],
-    "15",
-    "Start lives at 2. Add 4 with +=, then display lives.",
-    ["lives = 2", "lives += 4", "print(lives)"]
-  ),
-  lesson(
-    16,
-    "Variables",
-    "This is how to join text onto a variable",
-    "A plus sign between two pieces of text sticks them together. It does not add a space unless that space is inside the quotes.",
-    ['name = "Ada"', 'print("Hello, " + name)'],
-    "Hello, Ada",
-    "Store Sam in name, then display Bye, Sam by joining the text.",
-    ['name = "Sam"', 'print("Bye, " + name)']
-  ),
-  lesson(
-    17,
-    "Variables",
-    "This is how to place a variable inside a sentence",
-    "An f before the quotes makes an f-string. Names inside curly braces are replaced by their values. The braces are not displayed.",
-    ['name = "Ada"', "score = 10", 'print(f"{name} scored {score}")'],
-    "Ada scored 10",
-    "Store Lin in name and 7 in score. Display Lin scored 7 with an f-string.",
-    ['name = "Lin"', "score = 7", 'print(f"{name} scored {score}")']
-  ),
-  lesson(
-    18,
-    "Variables",
-    "This is how capital letters make a different name",
-    "Name and name are different variables. Changing one does not change the other.",
-    ['Name = "Ada"', 'name = "Grace"', "print(Name)", "print(name)"],
-    "Ada\nGrace",
-    "Store West in City and East in city. Display City, then city.",
-    ['City = "West"', 'city = "East"', "print(City)", "print(city)"]
-  ),
-  lesson(
-    19,
-    "Variables",
-    "This is how to save the result of a calculation",
-    "The multiplication is worked out on the right, saved in a new name, and that saved result is what gets displayed.",
-    ["price = 4", "count = 3", "total = price * count", "print(total)"],
-    "12",
-    "Store 6 in price and 2 in count. Save price times count in total, then display total.",
-    ["price = 6", "count = 2", "total = price * count", "print(total)"]
-  ),
-  lesson(
-    20,
-    "Variables",
-    "This is how to display a label and a value together",
-    "The words stay in the sentence. The braces pull in the variables.",
-    ['item = "tea"', "price = 4", 'print(f"One {item} costs {price}")'],
-    "One tea costs 4",
-    "Store cake in item and 9 in price. Display One cake costs 9 with an f-string.",
-    ['item = "cake"', "price = 9", 'print(f"One {item} costs {price}")']
-  ),
-  lesson(
-    21,
-    "Numbers",
-    "This is how to add, subtract, and multiply",
-    "These three symbols do the everyday arithmetic. print displays the result, not the symbols.",
-    ["print(7 + 2)", "print(7 - 2)", "print(7 * 2)"],
-    "9\n5\n14",
-    "Display 10 + 4, then 10 - 4, then 10 * 4, each on its own line.",
-    ["print(10 + 4)", "print(10 - 4)", "print(10 * 4)"]
-  ),
-  lesson(
-    22,
-    "Numbers",
-    "This is how the two kinds of division differ",
-    "One slash keeps the decimal. Two slashes keep only how many whole times the second number fits, and drop the remainder.",
-    ["print(7 / 2)", "print(7 // 2)"],
-    "3.5\n3",
-    "Display 11 / 2, then 11 // 2.",
-    ["print(11 / 2)", "print(11 // 2)"]
-  ),
-  lesson(
-    23,
-    "Numbers",
-    "This is how to get the remainder",
-    "The % symbol gives what is left over after division. 7 divided by 2 leaves 1.",
-    ["print(7 % 2)"],
-    "1",
-    "Type a command that displays the remainder of 10 divided by 3.",
-    ["print(10 % 3)"]
-  ),
-  lesson(
-    24,
-    "Numbers",
-    "This is how to raise a number to a power",
-    "** means to the power of. 2 ** 3 is 2 × 2 × 2. A single * only multiplies once.",
-    ["print(2 ** 3)"],
-    "8",
-    "Type a command that displays 3 to the power of 2.",
-    ["print(3 ** 2)"]
-  ),
-  lesson(
-    25,
-    "Numbers",
-    "This is how to do one part of a sum first",
-    "Parentheses run before the rest of the line. Without them, multiplication happens before addition.",
-    ["print((2 + 3) * 4)"],
-    "20",
-    "Type a command that adds 1 and 5 first, then multiplies the result by 3.",
-    ["print((1 + 5) * 3)"]
-  ),
-  lesson(
-    26,
-    "Numbers",
-    "This is how to multiply a variable in place",
-    "*= multiplies the stored number and saves the result back into the same name.",
-    ["apples = 3", "apples *= 2", "print(apples)"],
-    "6",
-    "Start boxes at 5. Multiply them by 3 with *=, then display boxes.",
-    ["boxes = 5", "boxes *= 3", "print(boxes)"]
-  ),
-  lesson(
-    27,
-    "Numbers",
-    "This is how to ask whether a comparison is true",
-    "A comparison produces True or False. > means greater than, == means equal, and != means not equal.",
-    ["print(10 > 3)", "print(10 == 10)", "print(10 != 4)"],
-    "True\nTrue\nTrue",
-    "Display whether 4 > 9, whether 4 == 4, and whether 4 != 4, each on its own line.",
-    ["print(4 > 9)", "print(4 == 4)", "print(4 != 4)"]
-  ),
-  lesson(
-    28,
-    "Numbers",
-    "This is how to compare a stored number",
-    "The comparison uses the number stored in the variable. >= means greater than or equal to.",
-    ["age = 20", "print(age >= 18)"],
-    "True",
-    "Store 15 in age, then display whether age is at least 18.",
-    ["age = 15", "print(age >= 18)"]
-  ),
-  lesson(
-    29,
-    "Numbers",
-    "This is how to use a decimal number",
-    "A number with a decimal point is a float. Multiplying a float by a whole number gives a float, so the result keeps the decimal.",
-    ["width = 2.5", "height = 4", "print(width * height)"],
-    "10.0",
-    "Store 1.5 in width and 2 in height, then display width times height.",
-    ["width = 1.5", "height = 2", "print(width * height)"]
-  ),
-  lesson(
-    30,
-    "Numbers",
-    "This is how to turn text into a whole number",
-    "Digits inside quotes are still text. int() turns them into a number so you can do arithmetic.",
-    ['text = "21"', "number = int(text)", "print(number + 1)"],
-    "22",
-    "Store the text 8 in text, turn it into a number, add 2, and display the result.",
-    ['text = "8"', "number = int(text)", "print(number + 2)"]
-  ),
-  lesson(
-    31,
-    "Text",
-    "This is how to count the characters in text",
-    "len returns how many characters are in the text. The example word has six characters, so the screen shows 6.",
-    ['word = "Python"', "print(len(word))"],
-    "6",
-    "Store code in word, then display how many characters it has.",
-    ['word = "code"', "print(len(word))"]
-  ),
-  lesson(
-    32,
-    "Text",
-    "This is how to pick one character",
-    "Positions start at 0, not 1. Brackets pick one position.",
-    ['word = "Python"', "print(word[0])", "print(word[1])"],
-    "P\ny",
-    "Store Boat in word. Display the first character, then the second character.",
-    ['word = "Boat"', "print(word[0])", "print(word[1])"]
-  ),
-  lesson(
-    33,
-    "Text",
-    "This is how to take a slice of text",
-    "A slice keeps a stretch of characters. The start is included. The end is not. The example keeps the first three characters.",
-    ['word = "Python"', "print(word[0:3])"],
-    "Pyt",
-    "Store Garden in word, then display the first four characters.",
-    ['word = "Garden"', "print(word[0:4])"]
-  ),
-  lesson(
-    34,
-    "Text",
-    "This is how to change the case of text",
-    "lower() returns small letters. upper() returns capitals. The original text stays as it was.",
-    ['word = "Python"', "print(word.lower())", "print(word.upper())"],
-    "python\nPYTHON",
-    "Store Hello in word. Display it in small letters, then in capitals.",
-    ['word = "Hello"', "print(word.lower())", "print(word.upper())"]
-  ),
-  lesson(
-    35,
-    "Text",
-    "This is how to remove spaces from the ends",
-    "strip() returns the text without spaces at the beginning or the end. Spaces in the middle would stay.",
-    ['messy = "  hello  "', "print(messy.strip())"],
-    "hello",
-    "Store the text \"  Bye  \" in messy, including the spaces at both ends. Display it with those end spaces removed.",
-    ['messy = "  Bye  "', "print(messy.strip())"]
-  ),
-  lesson(
-    36,
-    "Text",
-    "This is how to replace part of a text",
-    "replace returns a new string. The first piece is swapped for the second. The rest stays the same.",
-    ['sentence = "I like tea"', 'print(sentence.replace("tea", "code"))'],
-    "I like code",
-    "Store I like rain in sentence. Display it with rain replaced by sun.",
-    ['sentence = "I like rain"', 'print(sentence.replace("rain", "sun"))']
-  ),
-  lesson(
-    37,
-    "Text",
-    "This is how to split text into pieces",
-    "split cuts at every separator and returns a list. Counting starts at 0, so [0] is the first piece and [2] is the third.",
-    ['line = "red,green,blue"', 'parts = line.split(",")', "print(parts[0])", "print(parts[2])"],
-    "red\nblue",
-    "Split cat,dog,bird on commas. Display the first piece, then the third piece.",
-    ['line = "cat,dog,bird"', 'parts = line.split(",")', "print(parts[0])", "print(parts[2])"]
-  ),
-  lesson(
-    38,
-    "Text",
-    "This is how to join pieces into one text",
-    "join places the text before the dot between the items. A comma and a space become the separator.",
-    ['words = ["red", "green", "blue"]', 'print(", ".join(words))'],
-    "red, green, blue",
-    "Join the list one, two, and three with a comma and a space, then display the result.",
-    ['words = ["one", "two", "three"]', 'print(", ".join(words))']
-  ),
-  lesson(
-    39,
-    "Text",
-    "This is how to ask whether text contains a word",
-    "in answers True when the smaller text appears inside the larger one. Capitals matter.",
-    ['sentence = "I like Python"', 'print("Python" in sentence)', 'print("Java" in sentence)'],
-    "True\nFalse",
-    "Store I like tea in sentence. Display whether tea is in it, then whether cake is in it.",
-    ['sentence = "I like tea"', 'print("tea" in sentence)', 'print("cake" in sentence)']
-  ),
-  lesson(
-    40,
-    "Text",
-    "This is how to make the first letter a capital",
-    "capitalize() returns a new string. The first letter becomes a capital and the other letters become small.",
-    ['name = "ada"', "print(name.capitalize())"],
-    "Ada",
-    "Store sam in name, then display it with the first letter capital.",
-    ['name = "sam"', "print(name.capitalize())"]
-  ),
-  lesson(
-    41,
-    "Decisions",
-    "This is how to run a line only when a test is true",
-    "if asks a question. The colon starts the block. The next line is indented by four spaces, and it runs only when the answer is yes.",
-    ["score = 80", "if score >= 50:", '    print("Pass")'],
-    "Pass",
-    "Store 95 in mark. If mark is at least 40, display Yes.",
-    ["mark = 95", "if mark >= 40:", '    print("Yes")']
-  ),
-  lesson(
-    42,
-    "Decisions",
-    "This is how to choose between two paths",
-    "else is the path for when the if test is false. Its line is indented too.",
-    ["score = 40", "if score >= 50:", '    print("Pass")', "else:", '    print("Try again")'],
-    "Try again",
-    "Store 12 in temperature. If temperature is below 0, display Cold. Otherwise display Fine.",
-    ["temperature = 12", "if temperature < 0:", '    print("Cold")', "else:", '    print("Fine")']
-  ),
-  lesson(
-    43,
-    "Decisions",
-    "This is how to check a second question",
-    "elif is checked only when the earlier if was false. else runs only when every test above it was false.",
-    ["score = 85", "if score >= 90:", '    print("Excellent")', "elif score >= 50:", '    print("Pass")', "else:", '    print("Try again")'],
-    "Pass",
-    "Store 3 in level. If level is at least 5, display High. Else if it is at least 2, display Mid. Otherwise display Low.",
-    ["level = 3", "if level >= 5:", '    print("High")', "elif level >= 2:", '    print("Mid")', "else:", '    print("Low")']
-  ),
-  lesson(
-    44,
-    "Decisions",
-    "This is how to require two things to be true",
-    "and is true only when both sides are true. If either side is false, the indented line does not run.",
-    ["age = 17", "has_ticket = True", "if age >= 16 and has_ticket:", '    print("You can enter")'],
-    "You can enter",
-    "Store 21 in age and True in has_ticket. If age is at least 18 and has_ticket is true, display Welcome.",
-    ["age = 21", "has_ticket = True", "if age >= 18 and has_ticket:", '    print("Welcome")']
-  ),
-  lesson(
-    45,
-    "Decisions",
-    "This is how to accept either of two answers",
-    "or is true when at least one side is true. One match is enough.",
-    ['day = "Sunday"', 'if day == "Saturday" or day == "Sunday":', '    print("Weekend")'],
-    "Weekend",
-    "Store Friday in today. If today is Friday or Saturday, display Off.",
-    ['today = "Friday"', 'if today == "Friday" or today == "Saturday":', '    print("Off")']
-  ),
-  lesson(
-    46,
-    "Decisions",
-    "This is how to flip a yes-or-no value",
-    "not turns True into False and False into True.",
-    ["raining = False", "if not raining:", '    print("Go outside")'],
-    "Go outside",
-    "Store True in raining. If it is not raining, display Go outside. Otherwise display Stay in.",
-    ["raining = True", "if not raining:", '    print("Go outside")', "else:", '    print("Stay in")']
-  ),
-  lesson(
-    47,
-    "Decisions",
-    "This is how empty text fails a test",
-    "Empty quotes count as false. Text with any characters counts as true.",
-    ['name = ""', "if name:", '    print("Hello, " + name)', "else:", '    print("Hello, stranger")'],
-    "Hello, stranger",
-    "Store Mira in name. If name has text, display Hello, joined with that name. Otherwise display Hello, stranger.",
-    ['name = "Mira"', "if name:", '    print("Hello, " + name)', "else:", '    print("Hello, stranger")']
-  ),
-  lesson(
-    48,
-    "Decisions",
-    "This is how to run more than one line in a block",
-    "Every indented line under the if belongs to the same decision. Both lines run when the test is true.",
-    ["temperature = 30", "if temperature > 25:", '    print("Hot")', '    print("Drink water")'],
-    "Hot\nDrink water",
-    "Store 31 in heat. If heat is above 20, display Warm and then Rest.",
-    ["heat = 31", "if heat > 20:", '    print("Warm")', '    print("Rest")']
-  ),
-  lesson(
-    49,
-    "Decisions",
-    "This is how to use True and False directly",
-    "True and False are ready-made values. A variable that already holds one of them can be used as the test.",
-    ["logged_in = True", "if logged_in:", '    print("Welcome back")', "else:", '    print("Please sign in")'],
-    "Welcome back",
-    "Store False in logged_in. If logged_in is true, display Welcome back. Otherwise display Please sign in.",
-    ["logged_in = False", "if logged_in:", '    print("Welcome back")', "else:", '    print("Please sign in")']
-  ),
-  lesson(
-    50,
-    "Decisions",
-    "This is how to pick different text for one special case",
-    "The if handles the one special value. else handles every other value. str() turns a number into text so it can be joined.",
-    ["points = 3", "if points == 1:", '    print("1 point")', "else:", '    print(str(points) + " points")'],
-    "3 points",
-    "Store 1 in points. If points is exactly 1, display 1 point. Otherwise display the number joined to the word points.",
-    ["points = 1", "if points == 1:", '    print("1 point")', "else:", '    print(str(points) + " points")']
-  ),
-  lesson(
-    51,
-    "Loops",
-    "This is how to repeat an action for each item",
-    "for visits one item at a time. The indented line runs once for each item.",
-    ['for fruit in ["apple", "pear", "plum"]:', "    print(fruit)"],
-    "apple\npear\nplum",
-    "Display each of these on its own line: kiwi, mango, lime.",
-    ['for fruit in ["kiwi", "mango", "lime"]:', "    print(fruit)"]
-  ),
-  lesson(
-    52,
-    "Loops",
-    "This is how to repeat a count",
-    "range(3) produces 0, 1, and 2. It stops before 3.",
-    ["for number in range(3):", "    print(number)"],
-    "0\n1\n2",
-    "Use range to display 0, 1, 2, and 3, each on its own line.",
-    ["for number in range(4):", "    print(number)"]
-  ),
-  lesson(
-    53,
-    "Loops",
-    "This is how to start the count at 1",
-    "range(start, stop) includes the start and stops before the second number.",
-    ["for number in range(1, 4):", "    print(number)"],
-    "1\n2\n3",
-    "Use range to display 2, 3, and 4, each on its own line.",
-    ["for number in range(2, 5):", "    print(number)"]
-  ),
-  lesson(
-    54,
-    "Loops",
-    "This is how to add up a list",
-    "total starts at 0. Each visit adds the current number. The print is not indented, so it runs once after the loop.",
-    ["total = 0", "for number in [4, 5, 6]:", "    total = total + number", "print(total)"],
-    "15",
-    "Start total at 0. Add each of 1, 2, and 3. After the loop, display total.",
-    ["total = 0", "for number in [1, 2, 3]:", "    total = total + number", "print(total)"]
-  ),
-  lesson(
-    55,
-    "Loops",
-    "This is how to walk through each character",
-    "A for loop can visit a string one character at a time.",
-    ['word = "cat"', "for letter in word:", "    print(letter)"],
-    "c\na\nt",
-    "Store hi in word, then display each character on its own line.",
-    ['word = "hi"', "for letter in word:", "    print(letter)"]
-  ),
-  lesson(
-    56,
-    "Loops",
-    "This is how to repeat while a test stays true",
-    "while checks its test before every visit. Something inside must change, or the loop will not end. A line after the loop runs once.",
-    ["count = 3", "while count > 0:", "    print(count)", "    count = count - 1", 'print("Go")'],
-    "3\n2\n1\nGo",
-    "Start count at 2. While count is greater than 0, display it and then subtract 1. After the loop, display Go.",
-    ["count = 2", "while count > 0:", "    print(count)", "    count = count - 1", 'print("Go")']
-  ),
-  lesson(
-    57,
-    "Loops",
-    "This is how to print only some of the numbers",
-    "A test inside the loop can decide which visits display something. number % 2 == 0 is true for even numbers.",
-    ["for number in range(1, 6):", "    if number % 2 == 0:", "        print(number)"],
-    "2\n4",
-    "For numbers from 1 up to but not including 7, display the number when it is even.",
-    ["for number in range(1, 7):", "    if number % 2 == 0:", "        print(number)"]
-  ),
-  lesson(
-    58,
-    "Loops",
-    "This is how to get the position and the item",
-    "enumerate pairs each item with its position, starting at 0. print places a space between the two values.",
-    ['names = ["Ada", "Grace"]', "for index, name in enumerate(names):", "    print(index, name)"],
-    "0 Ada\n1 Grace",
-    "For the list Sam, Lin, display the position and the name on each line.",
-    ['names = ["Sam", "Lin"]', "for index, name in enumerate(names):", "    print(index, name)"]
-  ),
-  lesson(
-    59,
-    "Loops",
-    "This is how to stop a loop early",
-    "break leaves the loop immediately. Lines after break in that visit do not run, and later numbers are not visited.",
-    ["for number in range(5):", "    if number == 3:", "        break", "    print(number)"],
-    "0\n1\n2",
-    "For numbers from 0 up to but not including 6, stop when the number is 4, before printing it.",
-    ["for number in range(6):", "    if number == 4:", "        break", "    print(number)"]
-  ),
-  lesson(
-    60,
-    "Loops",
-    "This is how to skip one turn of a loop",
-    "continue jumps to the next item. The loop itself keeps going.",
-    ["for number in range(4):", "    if number == 2:", "        continue", "    print(number)"],
-    "0\n1\n3",
-    "For numbers from 0 up to but not including 5, skip 1 and display the others.",
-    ["for number in range(5):", "    if number == 1:", "        continue", "    print(number)"]
-  ),
-  lesson(
-    61,
-    "Lists",
-    "This is how to read the first and last item",
-    "A list keeps items in order inside square brackets. [0] is the first item. [-1] is the last item.",
-    ['colors = ["red", "green", "blue"]', "print(colors[0])", "print(colors[-1])"],
-    "red\nblue",
-    "From the list up, mid, down, display the first item and then the last item.",
-    ['items = ["up", "mid", "down"]', "print(items[0])", "print(items[-1])"]
-  ),
-  lesson(
-    62,
-    "Lists",
-    "This is how to add an item to the end",
-    "append adds one item at the end. When a whole list is displayed, Python shows square brackets and single quotes around the text.",
-    ['colors = ["red", "green"]', 'colors.append("blue")', "print(colors)"],
-    "['red', 'green', 'blue']",
-    "Start colors with gold and silver. Add bronze to the end, then display the list.",
-    ['colors = ["gold", "silver"]', 'colors.append("bronze")', "print(colors)"]
-  ),
-  lesson(
-    63,
-    "Lists",
-    "This is how to remove an item by its value",
-    "remove deletes the first item equal to the value you give. The other items stay in the same order.",
-    ['colors = ["red", "green", "blue"]', 'colors.remove("green")', "print(colors)"],
-    "['red', 'blue']",
-    "Start with gold, silver, and bronze. Remove silver, then display the list.",
-    ['colors = ["gold", "silver", "bronze"]', 'colors.remove("silver")', "print(colors)"]
-  ),
-  lesson(
-    64,
-    "Lists",
-    "This is how to count the items in a list",
-    "len on a list counts items, not characters inside those items.",
-    ['colors = ["red", "green", "blue"]', "print(len(colors))"],
-    "3",
-    "Store a and b in a list called items, then display how many items it has.",
-    ['items = ["a", "b"]', "print(len(items))"]
-  ),
-  lesson(
-    65,
-    "Lists",
-    "This is how to ask whether a list contains an item",
-    "in looks through the list for an equal value. It does not change the list.",
-    ['colors = ["red", "green", "blue"]', 'print("green" in colors)'],
-    "True",
-    "Store oak and pine in a list called trees. Display whether pine is in the list.",
-    ['trees = ["oak", "pine"]', 'print("pine" in trees)']
-  ),
-  lesson(
-    66,
-    "Lists",
-    "This is how to sort a list in place",
-    "sort() rearranges the same list from smallest to largest. It does not hand back a new list.",
-    ["scores = [3, 1, 2]", "scores.sort()", "print(scores)"],
-    "[1, 2, 3]",
-    "Store 8, 2, and 5 in scores. Sort that same list, then display it.",
-    ["scores = [8, 2, 5]", "scores.sort()", "print(scores)"]
-  ),
-  lesson(
-    67,
-    "Lists",
-    "This is how to find the smallest, largest, and total",
-    "min returns the smallest item, max returns the largest, and sum adds the numbers. None of these change the list.",
-    ["scores = [4, 7, 7, 2]", "print(min(scores))", "print(max(scores))", "print(sum(scores))"],
-    "2\n7\n20",
-    "For the list 9, 1, 3, display the smallest, then the largest, then the total.",
-    ["scores = [9, 1, 3]", "print(min(scores))", "print(max(scores))", "print(sum(scores))"]
-  ),
-  lesson(
-    68,
-    "Lists",
-    "This is how to copy a list before changing it",
-    "[:] makes a new list with the same items. Changing the copy does not change the original.",
-    ['names = ["Ada", "Grace"]', "copy = names[:]", 'copy.append("Lin")', "print(names)", "print(copy)"],
-    "['Ada', 'Grace']\n['Ada', 'Grace', 'Lin']",
-    "Store Sam and Lin in names. Copy the list. Add Max to the copy only. Display names, then the copy.",
-    ['names = ["Sam", "Lin"]', "copy = names[:]", 'copy.append("Max")', "print(names)", "print(copy)"]
-  ),
-  lesson(
-    69,
-    "Lists",
-    "This is how to read an item inside a list of lists",
-    "The first pair of brackets picks an inner list. The second pair picks an item inside that list.",
-    ["row = [1, 2]", "grid = [row, [3, 4]]", "print(grid[1][0])"],
-    "3",
-    "Make row hold 8 and 9. Make grid hold row and then 6 and 7. Display the first item of the second inner list.",
-    ["row = [8, 9]", "grid = [row, [6, 7]]", "print(grid[1][0])"]
-  ),
-  lesson(
-    70,
-    "Lists",
-    "This is how to get a sorted copy",
-    "sorted() returns a new list and leaves the original in its old order.",
-    ['words = ["pear", "apple", "plum"]', "ordered = sorted(words)", "print(ordered)", "print(words)"],
-    "['apple', 'pear', 'plum']\n['pear', 'apple', 'plum']",
-    "Store fig, date, and kiwi in words. Save a sorted copy in ordered. Display ordered, then words.",
-    ['words = ["fig", "date", "kiwi"]', "ordered = sorted(words)", "print(ordered)", "print(words)"]
-  ),
-  lesson(
-    71,
-    "Functions",
-    "This is how to define a function and call it",
-    "def saves the indented steps. Those steps do not run until a later line calls the function.",
-    ["def greet():", '    print("Hello")', "greet()"],
-    "Hello",
-    "Define a function called wave that displays Hi. Then call wave.",
-    ["def wave():", '    print("Hi")', "wave()"]
-  ),
-  lesson(
-    72,
-    "Functions",
-    "This is how to pass information into a function",
-    "The name inside the parentheses waits for a value. The call fills that name for this one run.",
-    ["def greet(name):", '    print("Hello, " + name)', 'greet("Ada")'],
-    "Hello, Ada",
-    "Define greet so it displays Bye, joined with the name it receives. Call it with Sam.",
-    ["def greet(name):", '    print("Bye, " + name)', 'greet("Sam")']
-  ),
-  lesson(
-    73,
-    "Functions",
-    "This is how to send a value back",
-    "return hands a value back to the caller and leaves the function. The caller can save that value and display it.",
-    ["def add(a, b):", "    return a + b", "result = add(2, 5)", "print(result)"],
-    "7",
-    "Define add so it returns the sum of a and b. Save add(3, 4) in result and display result.",
-    ["def add(a, b):", "    return a + b", "result = add(3, 4)", "print(result)"]
-  ),
-  lesson(
-    74,
-    "Functions",
-    "This is how to give a parameter a default",
-    "A default is used when the caller does not supply that value. A supplied value replaces the default.",
-    ["def greet(name=\"friend\"):", '    print("Hello, " + name)', "greet()", 'greet("Ada")'],
-    "Hello, friend\nHello, Ada",
-    "Define greet with a default name of friend, and make it display Hi, joined with the name. Call greet() with nothing, then call greet with Sam.",
-    ["def greet(name=\"friend\"):", '    print("Hi, " + name)', "greet()", 'greet("Sam")']
-  ),
-  lesson(
-    75,
-    "Functions",
-    "This is how to repeat text with a parameter",
-    "Multiplying text repeats it. The function receives the text and how many times to repeat it.",
-    ["def line(word, times):", "    print(word * times)", 'line("-", 4)'],
-    "----",
-    "Define line so it displays word repeated times times. Call line with a star and 3.",
-    ["def line(word, times):", "    print(word * times)", 'line("*", 3)']
-  ),
-  lesson(
-    76,
-    "Functions",
-    "This is how a function can answer True or False",
-    "The function returns the comparison. The print calls outside the function display those answers.",
-    ["def is_even(number):", "    return number % 2 == 0", "print(is_even(4))", "print(is_even(5))"],
-    "True\nFalse",
-    "Define is_even so it returns whether a number divides by 2 with nothing left over. Display is_even(6), then is_even(7).",
-    ["def is_even(number):", "    return number % 2 == 0", "print(is_even(6))", "print(is_even(7))"]
-  ),
-  lesson(
-    77,
-    "Functions",
-    "This is how a function can loop over a list",
-    "The parameter receives the whole list. The loop adds each item, and return sends the total back.",
-    ["def total(numbers):", "    result = 0", "    for number in numbers:", "        result = result + number", "    return result", "print(total([2, 3, 4]))"],
-    "9",
-    "Define total so it adds up a list and returns the sum. Display total of 5 and 5.",
-    ["def total(numbers):", "    result = 0", "    for number in numbers:", "        result = result + number", "    return result", "print(total([5, 5]))"]
-  ),
-  lesson(
-    78,
-    "Functions",
-    "This is how to name the arguments at the call",
-    "At the call you can fill parameters by name, in any order.",
-    ["def label(name, score):", '    return f"{name}: {score}"', 'print(label(score=10, name="Ada"))'],
-    "Ada: 10",
-    "Define label(name, score) so it returns an f-string of the name, a colon, a space, and the score. Display label with score 4 and name Sam, named in that order.",
-    ["def label(name, score):", '    return f"{name}: {score}"', 'print(label(score=4, name="Sam"))']
-  ),
-  lesson(
-    79,
-    "Functions",
-    "This is how to use a result inside another call",
-    "Python works out the inside call first, then uses that result as the argument to the outside call.",
-    ["def double(number):", "    return number * 2", "print(double(double(3)))"],
-    "12",
-    "Define triple so it returns the number times 3. Display triple of triple of 2.",
-    ["def triple(number):", "    return number * 3", "print(triple(triple(2)))"]
-  ),
-  lesson(
-    80,
-    "Functions",
-    "This is how a function can print several lines",
-    "Every indented print belongs to the function. One call runs them from top to bottom.",
-    ["def banner(text):", '    print("***")', "    print(text)", '    print("***")', 'banner("Hi")'],
-    "***\nHi\n***",
-    "Define banner so it displays three dashes, then the text, then three dashes. Call it with Go.",
-    ["def banner(text):", '    print("---")', "    print(text)", '    print("---")', 'banner("Go")']
-  ),
-  lesson(
-    81,
-    "Dictionaries",
-    "This is how to store a value under a label",
-    "A dictionary pairs each key with a value. You look up the key, not a position.",
-    ['person = {"name": "Ada", "city": "London"}', 'print(person["name"])'],
-    "Ada",
-    "Make a dictionary called person with name set to Sam and city set to Rome. Display the name.",
-    ['person = {"name": "Sam", "city": "Rome"}', 'print(person["name"])']
-  ),
-  lesson(
-    82,
-    "Dictionaries",
-    "This is how to add a new pair",
-    "Using a key that is not there yet adds a new pair.",
-    ['person = {"name": "Ada"}', 'person["city"] = "London"', 'print(person["city"])'],
-    "London",
-    "Start person as a dictionary whose name is Sam. Add the key job with the value cook. Display the job.",
-    ['person = {"name": "Sam"}', 'person["job"] = "cook"', 'print(person["job"])']
-  ),
-  lesson(
-    83,
-    "Dictionaries",
-    "This is how to change a value that is already stored",
-    "Using a key that already exists replaces its value. The key stays.",
-    ['person = {"name": "Ada", "city": "London"}', 'person["city"] = "Paris"', 'print(person["city"])'],
-    "Paris",
-    "Start person with name Sam and city Rome. Change the city to Oslo, then display the city.",
-    ['person = {"name": "Sam", "city": "Rome"}', 'person["city"] = "Oslo"', 'print(person["city"])']
-  ),
-  lesson(
-    84,
-    "Dictionaries",
-    "This is how to ask whether a key exists",
-    "in on a dictionary checks the keys, not the values.",
-    ['person = {"name": "Ada", "city": "London"}', 'print("city" in person)', 'print("age" in person)'],
-    "True\nFalse",
-    "For a dictionary with name Sam and job cook, display whether job is a key, then whether age is a key.",
-    ['person = {"name": "Sam", "job": "cook"}', 'print("job" in person)', 'print("age" in person)']
-  ),
-  lesson(
-    85,
-    "Dictionaries",
-    "This is how to walk through every pair",
-    "A for loop over a dictionary visits the keys in the order they were added. The value is read with the key.",
-    ['person = {"name": "Ada", "score": 10}', "for key in person:", "    print(key)", "    print(person[key])"],
-    "name\nAda\nscore\n10",
-    "For a dictionary with item tea and price 4, display each key and then its value.",
-    ['info = {"item": "tea", "price": 4}', "for key in info:", "    print(key)", "    print(info[key])"]
-  ),
-  lesson(
-    86,
-    "Dictionaries",
-    "This is how to look up a key that might be missing",
-    "get returns the second argument when the key is missing, instead of stopping the program.",
-    ['scores = {"Ada": 10, "Grace": 8}', 'print(scores.get("Lin", 0))'],
-    "0",
-    "For a dictionary with Sam 5 and Lin 3, display the result of looking up Max with a default of 0.",
-    ['scores = {"Sam": 5, "Lin": 3}', 'print(scores.get("Max", 0))']
-  ),
-  lesson(
-    87,
-    "Dictionaries",
-    "This is how to increase a number stored in a dictionary",
-    "Read the current number, add to it, and save the result back under the same key.",
-    ['scores = {"Ada": 10}', 'scores["Ada"] = scores["Ada"] + 1', 'print(scores["Ada"])'],
-    "11",
-    "Start scores with Sam set to 5. Add 2 to Sam's score, then display it.",
-    ['scores = {"Sam": 5}', 'scores["Sam"] = scores["Sam"] + 2', 'print(scores["Sam"])']
-  ),
-  lesson(
-    88,
-    "Dictionaries",
-    "This is how to count how many times each word appears",
-    "The dictionary starts empty. For each word, get the current count, or 0 if it is new, then add 1.",
-    ['words = ["tea", "tea", "code"]', "counts = {}", "for word in words:", "    counts[word] = counts.get(word, 0) + 1", 'print(counts["tea"])', 'print(counts["code"])'],
-    "2\n1",
-    "Count the words sun, sun, sun, and rain. Display the count for sun, then the count for rain.",
-    ['words = ["sun", "sun", "sun", "rain"]', "counts = {}", "for word in words:", "    counts[word] = counts.get(word, 0) + 1", 'print(counts["sun"])', 'print(counts["rain"])']
-  ),
-  lesson(
-    89,
-    "Dictionaries",
-    "This is how to delete a pair",
-    "del removes the key and its value. A later membership test can show that the key is gone.",
-    ['person = {"name": "Ada", "city": "London"}', 'del person["city"]', 'print("city" in person)'],
-    "False",
-    "Start person with name Sam and job cook. Delete job. Display whether job is still a key.",
-    ['person = {"name": "Sam", "job": "cook"}', 'del person["job"]', 'print("job" in person)']
-  ),
-  lesson(
-    90,
-    "Dictionaries",
-    "This is how to combine two dictionaries",
-    "The | operator builds a new dictionary with the pairs from both sides. It does not change the original two.",
-    ['user = {"name": "Ada"}', 'settings = {"theme": "dark"}', "profile = user | settings", 'print(profile["name"])', 'print(profile["theme"])'],
-    "Ada\ndark",
-    "Combine a dictionary whose name is Sam with a dictionary whose lang is en. Display the name, then the lang.",
-    ['user = {"name": "Sam"}', 'settings = {"lang": "en"}', "profile = user | settings", 'print(profile["name"])', 'print(profile["lang"])']
-  ),
-  lesson(
-    91,
-    "Building programs",
-    "This is how to store a pair that should not change",
-    "A tuple keeps items in order and is written with parentheses. You read an item by its position.",
-    ["point = (3, 4)", "print(point[0])", "print(point[1])"],
-    "3\n4",
-    "Store the pair 8, 1 in point. Display the first item, then the second item.",
-    ["point = (8, 1)", "print(point[0])", "print(point[1])"]
-  ),
-  lesson(
-    92,
-    "Building programs",
-    "This is how to unpack a pair into two names",
-    "Two names on the left receive the two values on the right, in order.",
-    ["x, y = (3, 4)", "print(x)", "print(y)"],
-    "3\n4",
-    "Unpack the pair 9, 2 into a and b. Display a, then b.",
-    ["a, b = (9, 2)", "print(a)", "print(b)"]
-  ),
-  lesson(
-    93,
-    "Building programs",
-    "This is how a set keeps each value once",
-    "A set drops duplicates. len then counts the values that remain.",
-    ['tags = {"python", "code", "python"}', "print(len(tags))"],
-    "2",
-    "Make a set called tags that contains red, blue, and red again. Display how many items it keeps.",
-    ['tags = {"red", "blue", "red"}', "print(len(tags))"]
-  ),
-  lesson(
-    94,
-    "Building programs",
-    "This is how to add to a set",
-    "add puts a value into the set. If that value is already there, the set does not grow.",
-    ['tags = {"python", "code"}', 'tags.add("loops")', 'print("loops" in tags)'],
-    "True",
-    "Start tags with red and blue. Add green. Display whether green is in the set.",
-    ['tags = {"red", "blue"}', 'tags.add("green")', 'print("green" in tags)']
-  ),
-  lesson(
-    95,
-    "Building programs",
-    "This is how to read a line that a person types",
-    "input displays its prompt and waits. The typed line comes back as text. In the example, the person types Ada, and the program then displays Hello, Ada.",
-    ['name = input("Name: ")', 'print("Hello, " + name)'],
-    "Name: Ada\nHello, Ada",
-    "Ask with the prompt City: and store the answer in city. Then display Visit, joined with a space and that city. You type the program, not a sample conversation.",
-    ['city = input("City: ")', 'print("Visit " + city)']
-  ),
-  lesson(
-    96,
-    "Building programs",
-    "This is how to read a number that a person types",
-    "input always returns text. int() turns digits into a number so arithmetic works. In the example, the person types 20 and the program displays 21.",
-    ['age_text = input("Age: ")', "age = int(age_text)", "print(age + 1)"],
-    "Age: 20\n21",
-    "Ask with the prompt Year: and store the answer in year_text. Turn it into a number called year, then display that number plus 10.",
-    ['year_text = input("Year: ")', "year = int(year_text)", "print(year + 10)"]
-  ),
-  lesson(
-    97,
-    "Building programs",
-    "This is how the program continues after bad text",
-    "try watches a block that might fail. except runs instead of stopping the program when the named error happens.",
-    ["try:", '    print(int("hello"))', "except ValueError:", '    print("That was not a whole number")'],
-    "That was not a whole number",
-    "Try to display int of the text 12. If that fails with ValueError, display That was not a whole number.",
-    ["try:", '    print(int("12"))', "except ValueError:", '    print("That was not a whole number")']
-  ),
-  lesson(
-    98,
-    "Building programs",
-    "This is how to save text and read it back",
-    "write_text saves text into a file. read_text brings that text back, and print displays it.",
-    ["from pathlib import Path", 'Path("note.txt").write_text("Remember this")', 'print(Path("note.txt").read_text())'],
-    "Remember this",
-    "Save the text Bring a pen into a file called list.txt, read it back, and display it.",
-    ["from pathlib import Path", 'Path("list.txt").write_text("Bring a pen")', 'print(Path("list.txt").read_text())']
-  ),
-  lesson(
-    99,
-    "Building programs",
-    "This is how to use a tool from the math module",
-    "import loads tools that are not available at the start. math.sqrt returns a square root as a decimal number.",
-    ["import math", "print(math.sqrt(16))"],
-    "4.0",
-    "Import math and display the square root of 9.",
-    ["import math", "print(math.sqrt(9))"]
-  ),
-  lesson(
-    100,
-    "Building programs",
-    "This is how to make a simple object",
-    "class describes a kind of object. A method is a function that belongs to it. self is the object itself and is filled in automatically.",
-    ["class Greeter:", "    def hello(self, name):", '        return "Hello, " + name', "bot = Greeter()", 'print(bot.hello("Ada"))'],
-    "Hello, Ada",
-    "Define Greeter with a hello method that returns Bye, joined with the name. Make an object called bot and display bot.hello with Sam.",
-    ["class Greeter:", "    def hello(self, name):", '        return "Bye, " + name', "bot = Greeter()", 'print(bot.hello("Sam"))']
-  )
+const STEPS = [
+  {
+    id: "create",
+    minutes: 3,
+    section: "Start",
+    title: "Create jarvis.py",
+    building: "A new file Python can run. main.py stays as it is.",
+    actions: [
+      "In Cursor, open the MyAIAssistant folder.",
+      "Create a file named jarvis.py. Do not edit main.py.",
+      "Paste the line below into jarvis.py.",
+      "Open the terminal in Cursor and run the command."
+    ],
+    snippets: [{ name: "jarvis.py", code: "print(\"JARVIS file is ready.\")" }],
+    where: "This is the whole file for now.",
+    run: "python jarvis.py",
+    success: "JARVIS file is ready.",
+    why: "print sends text to the terminal. This page cannot run Python. Cursor on your computer does.",
+    help: [
+      "If Python cannot find the file, the terminal is in the wrong folder. It should be MyAIAssistant.",
+      "If python is not recognized, run py jarvis.py instead."
+    ]
+  },
+  {
+    id: "greet",
+    minutes: 3,
+    section: "Start",
+    title: "Say hello",
+    building: "JARVIS greets you when the file starts.",
+    actions: [
+      "Replace the line in jarvis.py with the line below.",
+      "Save the file.",
+      "Run it again."
+    ],
+    snippets: [{ name: "Replace the old line", code: "print(\"JARVIS: Hello. I am online.\")" }],
+    where: "Replace the line from the last step. Do not add a second print.",
+    run: "python jarvis.py",
+    success: "JARVIS: Hello. I am online.",
+    why: "The words inside the quotes are the message. The quotes do not appear on screen.",
+    help: [
+      "If you still see JARVIS file is ready, the old line is still in the file, or the file was not saved."
+    ]
+  },
+  {
+    id: "input",
+    minutes: 4,
+    section: "Commands",
+    title: "Read a line",
+    building: "JARVIS waits for you to type, then repeats what you typed.",
+    actions: [
+      "Make jarvis.py match the file below.",
+      "Run it, type test, and press Enter."
+    ],
+    snippets: [{
+      name: "jarvis.py",
+      code: lines([
+        "print(\"JARVIS: Hello. I am online.\")",
+        "command = input(\"You: \")",
+        "print(\"JARVIS: You said\", command)"
+      ])
+    }],
+    where: "This replaces the whole file. It is still only three lines.",
+    run: "python jarvis.py",
+    success: lines([
+      "JARVIS: Hello. I am online.",
+      "You: test",
+      "JARVIS: You said test"
+    ]),
+    why: "input waits for Enter, then stores the line in command. The comma in print puts one space before what you typed.",
+    parts: [
+      "You: is the prompt. It is shown before you type.",
+      "command is the name of the stored line."
+    ],
+    help: [
+      "After You: the program is waiting, not frozen. Type something and press Enter."
+    ]
+  },
+  {
+    id: "commands",
+    minutes: 5,
+    section: "Commands",
+    title: "Answer hello",
+    building: "JARVIS chooses a reply instead of repeating every line.",
+    actions: [
+      "Replace the file with the version below.",
+      "Run it and type hello.",
+      "Run it again and type HELP.",
+      "Run it again and type status."
+    ],
+    snippets: [{
+      name: "jarvis.py",
+      code: lines([
+        "print(\"JARVIS: Hello. I am online.\")",
+        "command = input(\"You: \").strip()",
+        "",
+        "if command.lower() == \"hello\":",
+        "    print(\"JARVIS: At your service.\")",
+        "elif command.lower() == \"help\":",
+        "    print(\"JARVIS: Try hello, help, or exit.\")",
+        "else:",
+        "    print(\"JARVIS: I heard you.\")"
+      ])
+    }],
+    where: "This replaces the whole file. The print lines under if, elif, and else each start with four spaces.",
+    run: "python jarvis.py",
+    success: lines([
+      "hello  ->  JARVIS: At your service.",
+      "HELP   ->  JARVIS: Try hello, help, or exit.",
+      "status ->  JARVIS: I heard you."
+    ]),
+    why: "if runs one indented block only when the test is true. elif tries the next test. else runs when none of the tests matched.",
+    parts: [
+      ".strip() removes a space you typed by accident.",
+      ".lower() makes Hello and HELLO match hello.",
+      "== compares two values. One = would store a value instead."
+    ],
+    help: [
+      "IndentationError means a print line is not indented with four spaces.",
+      "If HELP takes the else branch, .lower() is missing."
+    ]
+  },
+  {
+    id: "loop",
+    minutes: 6,
+    section: "Commands",
+    title: "Loop until exit",
+    building: "JARVIS keeps asking until you type exit.",
+    actions: [
+      "Replace the file with the loop below.",
+      "Run it once.",
+      "Type hello, then help, then exit."
+    ],
+    snippets: [{
+      name: "jarvis.py",
+      code: lines([
+        "print(\"JARVIS: Hello. I am online.\")",
+        "",
+        "while True:",
+        "    command = input(\"You: \").strip()",
+        "    if command.lower() == \"exit\":",
+        "        print(\"JARVIS: Goodbye.\")",
+        "        break",
+        "    if command == \"\":",
+        "        continue",
+        "    if command.lower() == \"hello\":",
+        "        print(\"JARVIS: At your service.\")",
+        "    elif command.lower() == \"help\":",
+        "        print(\"JARVIS: Try hello, help, or exit.\")",
+        "    else:",
+        "        print(\"JARVIS: I heard you.\")"
+      ])
+    }],
+    where: "This replaces the whole file. Lines inside the loop are indented. Lines inside a test are indented again.",
+    run: "python jarvis.py",
+    success: lines([
+      "JARVIS: Hello. I am online.",
+      "You: hello",
+      "JARVIS: At your service.",
+      "You: help",
+      "JARVIS: Try hello, help, or exit.",
+      "You: exit",
+      "JARVIS: Goodbye."
+    ]),
+    why: "while True repeats forever. break is the line that leaves the loop. continue skips the rest of this pass and asks again.",
+    parts: [
+      "An empty line is ignored, so a stray Enter does not get a reply.",
+      "Without break, exit would print goodbye and then ask again."
+    ],
+    help: [
+      "If the program never ends, exit is not reaching break. Check the spelling and the indent of break.",
+      "To stop a stuck program, click the terminal and press Ctrl+C."
+    ]
+  },
+  {
+    id: "function",
+    minutes: 6,
+    section: "Commands",
+    title: "Use a function",
+    building: "The same replies, moved into reply so later commands have one home.",
+    actions: [
+      "Replace the file with the version below.",
+      "Run the same test: hello, help, exit.",
+      "The replies should not change. That means the move worked."
+    ],
+    snippets: [{
+      name: "jarvis.py",
+      code: lines([
+        "def reply(command):",
+        "    if command.lower() == \"hello\":",
+        "        return \"At your service.\"",
+        "    if command.lower() == \"help\":",
+        "        return \"Try hello, help, or exit.\"",
+        "    return \"I heard you.\"",
+        "",
+        "print(\"JARVIS: Hello. I am online.\")",
+        "",
+        "while True:",
+        "    command = input(\"You: \").strip()",
+        "    if command.lower() == \"exit\":",
+        "        print(\"JARVIS: Goodbye.\")",
+        "        break",
+        "    if command == \"\":",
+        "        continue",
+        "    print(\"JARVIS:\", reply(command))"
+      ])
+    }],
+    where: "This replaces the whole file. This is the basic assistant. Every later step adds to this file.",
+    run: "python jarvis.py",
+    success: lines([
+      "You: hello",
+      "JARVIS: At your service.",
+      "You: exit",
+      "JARVIS: Goodbye."
+    ]),
+    why: "def names a function. return sends text back to the loop. The loop prints it. New commands can go inside reply without rewriting the loop.",
+    parts: [
+      "reply(command) is the call. command is the line you just typed.",
+      "The last return is the backup reply."
+    ],
+    help: [
+      "If you see the word None, a branch is missing return.",
+      "The greeting should still appear before the first You:."
+    ]
+  },
+  {
+    id: "allow",
+    minutes: 6,
+    section: "Windows",
+    title: "Allow two apps",
+    building: "A whitelist that can start Notepad or Calculator, and nothing else.",
+    actions: [
+      "Add the import as the first line of jarvis.py.",
+      "Paste the whitelist and open_app under the reply function.",
+      "Do not change the loop yet.",
+      "Run hello and exit again. The old replies should still work."
+    ],
+    snippets: [
+      { name: "First line of the file", code: "import subprocess" },
+      {
+        name: "Under reply",
+        code: lines([
+          "ALLOWED = {",
+          "    \"notepad\": [\"notepad.exe\"],",
+          "    \"calc\": [\"calc.exe\"],",
+          "}",
+          "",
+          "def open_app(name):",
+          "    if name not in ALLOWED:",
+          "        return \"That app is not allowed.\"",
+          "    subprocess.Popen(ALLOWED[name])",
+          "    return \"Opening \" + name"
+        ])
+      }
+    ],
+    where: "import goes at the top. ALLOWED and open_app go after reply and before the greeting. Leave the loop alone.",
+    run: "python jarvis.py",
+    success: "hello still answers, and exit still ends the program. No app opens yet.",
+    why: "subprocess is the tool that starts another program. The list [\"notepad.exe\"] is the program to start. A typed sentence is never sent to Windows.",
+    parts: [
+      "ALLOWED is the only names JARVIS may open.",
+      "Popen starts that program. shell=True is not used.",
+      "notepad.exe and calc.exe are the real Windows program names."
+    ],
+    help: [
+      "A red error about subprocess means the import line is missing or not at the top.",
+      "Do not add os.system or shell=True. Those can run more than the one program you named."
+    ]
+  },
+  {
+    id: "open",
+    minutes: 5,
+    section: "Windows",
+    title: "Open an app",
+    building: "The command open notepad or open calc.",
+    actions: [
+      "Replace the whole reply function with the one below. Keep open_app.",
+      "Run JARVIS.",
+      "Type open calc, then open cmd, then exit."
+    ],
+    snippets: [{
+      name: "Replace reply",
+      code: lines([
+        "def reply(command):",
+        "    parts = command.lower().split()",
+        "    if parts and parts[0] == \"open\":",
+        "        if len(parts) == 1:",
+        "            return \"Say open notepad or open calc.\"",
+        "        return open_app(parts[1])",
+        "    if command.lower() == \"hello\":",
+        "        return \"At your service.\"",
+        "    if command.lower() == \"help\":",
+        "        return \"Try hello, help, open notepad, open calc, or exit.\"",
+        "    return \"I heard you.\""
+      ])
+    }],
+    where: "Replace only def reply. Do not remove open_app, the loop, or the import.",
+    run: "python jarvis.py",
+    success: lines([
+      "You: open calc",
+      "JARVIS: Opening calc",
+      "You: open cmd",
+      "JARVIS: That app is not allowed.",
+      "You: exit",
+      "JARVIS: Goodbye."
+    ]),
+    why: "split breaks the line into words. The first word chooses the command. The second word is the app name. cmd is not in the whitelist, so it is refused.",
+    parts: [
+      "Calculator should open for open calc. Close it yourself when you are done.",
+      "open notepad does the same for Notepad.",
+      "The refusal rule was checked. This tutorial did not launch the apps for you."
+    ],
+    help: [
+      "If open calc prints Opening calc but no window appears, look at the taskbar. Calculator may already be open.",
+      "If every open command is refused, the name must be notepad or calc, not notepad.exe."
+    ]
+  },
+  {
+    id: "ollama-check",
+    minutes: 3,
+    section: "Local model",
+    title: "Check Ollama",
+    building: "Proof that the local model is available before JARVIS calls it.",
+    actions: [
+      "Leave jarvis.py unchanged.",
+      "In the Cursor terminal, run ollama list.",
+      "Find qwen3:8b in that list."
+    ],
+    snippets: [],
+    where: "No code change in this step.",
+    run: "ollama list",
+    success: "A line that starts with qwen3:8b.",
+    why: "The model runs on this computer through Ollama. The phone you are reading cannot reach it. qwen3:8b is the model already used by main.py, and ollama list on this computer showed it.",
+    help: [
+      "If the command is not recognized, open the Ollama app from the Start menu, wait until it is running, and try again.",
+      "If qwen3:8b is missing, run ollama pull qwen3:8b and wait for the download."
+    ]
+  },
+  {
+    id: "ask-once",
+    minutes: 7,
+    section: "Local model",
+    title: "Ask the model once",
+    building: "One real reply from qwen3:8b, then back to the normal loop.",
+    actions: [
+      "Add import ollama under import subprocess.",
+      "Add MODEL and the ask_model function below.",
+      "Put the test print just above the greeting.",
+      "Run the file once. Wait for a sentence.",
+      "Delete only the test print. Leave ask_model in the file."
+    ],
+    snippets: [
+      { name: "With the other import", code: "import ollama" },
+      {
+        name: "Above the greeting",
+        code: lines([
+          "MODEL = \"qwen3:8b\"",
+          "",
+          "def ask_model(command):",
+          "    response = ollama.chat(",
+          "        model=MODEL,",
+          "        messages=[",
+          "            {",
+          "                \"role\": \"system\",",
+          "                \"content\": \"You are JARVIS, a helpful assistant. Answer clearly and briefly.\",",
+          "            },",
+          "            {\"role\": \"user\", \"content\": command},",
+          "        ],",
+          "        think=False,",
+          "    )",
+          "    return response[\"message\"][\"content\"]"
+        ])
+      },
+      {
+        name: "Temporary test, delete after one run",
+        code: "print(ask_model(\"Reply with one short sentence.\"))"
+      }
+    ],
+    where: "MODEL and ask_model go above the greeting. The test print goes on the line directly above print(\"JARVIS: Hello. I am online.\"). Delete that test print after it works.",
+    run: "python jarvis.py",
+    success: "A short sentence from the model, then JARVIS: Hello. I am online. The exact sentence will change. Then the usual You: prompt appears.",
+    why: "ollama.chat sends the messages list to qwen3:8b on this computer. think=False asks for the answer only. That call was checked here: the text comes back at response[\"message\"][\"content\"].",
+    parts: [
+      "system tells the model how to behave.",
+      "user is the question.",
+      "This version sends only the current question. It does not remember the last one yet."
+    ],
+    help: [
+      "If it sits there with no output, start the Ollama app and run it again. The first reply can take a little while.",
+      "If Python says there is no attribute think, delete the think=False line and the comma before it.",
+      "A blank answer usually means think=False was left out. qwen3 can hide its answer in reasoning without that setting."
+    ]
+  },
+  {
+    id: "unknown",
+    minutes: 6,
+    section: "Local model",
+    title: "Answer unknown commands",
+    building: "hello and open stay local. Anything else goes to the model.",
+    actions: [
+      "In reply, replace the last line return \"I heard you.\" with return None.",
+      "Inside the loop, replace the print of reply(command) with the four lines below.",
+      "Run it. Type hello, then ask what a variable is, then exit."
+    ],
+    snippets: [
+      { name: "Last line of reply", code: "    return None" },
+      {
+        name: "Inside the loop, in place of the old print",
+        code: lines([
+          "        answer = reply(command)",
+          "        if answer is None:",
+          "            answer = ask_model(command)",
+          "        print(\"JARVIS:\", answer)"
+        ])
+      }
+    ],
+    where: "return None stays indented inside reply. The four loop lines stay indented inside while, at the same level as the exit test.",
+    run: "python jarvis.py",
+    success: lines([
+      "You: hello",
+      "JARVIS: At your service.",
+      "You: what is a variable?",
+      "JARVIS: a short answer from the model",
+      "You: exit",
+      "JARVIS: Goodbye."
+    ]),
+    why: "None means reply has no local answer. The loop then calls ask_model. hello and open never reach the model.",
+    help: [
+      "If you see the word None, the loop is still using the old print(\"JARVIS:\", reply(command)) line.",
+      "If hello starts a long model answer, return None replaced the hello return by mistake. None belongs only on the last line."
+    ]
+  },
+  {
+    id: "history",
+    minutes: 5,
+    section: "Local model",
+    title: "Remember this run",
+    building: "The model can use earlier turns from this same run.",
+    actions: [
+      "Add the messages list next to MODEL.",
+      "Replace ask_model with the version below.",
+      "Run JARVIS and ask two related questions before exit.",
+      "A good pair: My name is Alex. Then: What is my name?"
+    ],
+    snippets: [
+      {
+        name: "Next to MODEL",
+        code: lines([
+          "messages = [",
+          "    {",
+          "        \"role\": \"system\",",
+          "        \"content\": \"You are JARVIS, a helpful assistant. Answer clearly and briefly.\",",
+          "    }",
+          "]"
+        ])
+      },
+      {
+        name: "Replace ask_model",
+        code: lines([
+          "def ask_model(command):",
+          "    messages.append({\"role\": \"user\", \"content\": command})",
+          "    response = ollama.chat(model=MODEL, messages=messages, think=False)",
+          "    answer = response[\"message\"][\"content\"]",
+          "    messages.append({\"role\": \"assistant\", \"content\": answer})",
+          "    return answer"
+        ])
+      }
+    ],
+    where: "messages is created once, above the functions. ask_model now uses that same list instead of building a new one each call.",
+    run: "python jarvis.py",
+    success: "The second answer can use the first. If you said your name, the model should be able to repeat it. Closing the program still forgets, until the next step.",
+    why: "Ollama does not keep your chat after the call ends. The messages list is the memory. append adds the question, then the answer, so the next call sends both.",
+    help: [
+      "If the second answer ignores the first, ask_model may still contain the old messages=[...] list. Replace the whole function.",
+      "hello and open are not added to this list. Only questions that reach ask_model are."
+    ]
+  },
+  {
+    id: "save",
+    minutes: 5,
+    section: "Memory",
+    title: "Save memory.json",
+    building: "The conversation is written to a file before JARVIS exits.",
+    actions: [
+      "Add import json next to the other imports.",
+      "Add save_memory under ask_model.",
+      "Call save_memory just before return answer inside ask_model.",
+      "Call save_memory in the exit branch, just before break.",
+      "Have a short chat, type exit, then open memory.json."
+    ],
+    snippets: [
+      { name: "With the other imports", code: "import json" },
+      {
+        name: "New function",
+        code: lines([
+          "def save_memory():",
+          "    with open(\"memory.json\", \"w\", encoding=\"utf-8\") as file:",
+          "        json.dump(messages, file)"
+        ])
+      },
+      { name: "Last lines of ask_model", code: lines(["    save_memory()", "    return answer"]) },
+      {
+        name: "Exit branch",
+        code: lines([
+          "        print(\"JARVIS: Goodbye.\")",
+          "        save_memory()",
+          "        break"
+        ])
+      }
+    ],
+    where: "save_memory can sit under ask_model. The call inside ask_model goes immediately above return answer. The exit call goes immediately above break.",
+    run: "python jarvis.py",
+    success: "After exit, memory.json is in the same folder. It contains the system message and the questions you asked the model.",
+    why: "json.dump writes the list in a form Python can read back. \"w\" replaces the file each time, so it stays a copy of the current list. encoding=\"utf-8\" keeps normal written text intact.",
+    help: [
+      "If memory.json is missing, exit never reached save_memory, or the file was saved in another folder. Check the terminal's folder.",
+      "Local commands such as hello may be absent from the file. Only model turns and the exit save are included."
+    ]
+  },
+  {
+    id: "load",
+    minutes: 5,
+    section: "Memory",
+    title: "Load memory next time",
+    building: "JARVIS reads memory.json when it starts.",
+    actions: [
+      "Add load_memory under save_memory.",
+      "Call load_memory() on the line before the greeting.",
+      "Run JARVIS and ask what you talked about last time.",
+      "Type exit when you are done."
+    ],
+    snippets: [
+      {
+        name: "New function",
+        code: lines([
+          "def load_memory():",
+          "    global messages",
+          "    try:",
+          "        with open(\"memory.json\", encoding=\"utf-8\") as file:",
+          "            loaded = json.load(file)",
+          "    except (FileNotFoundError, json.JSONDecodeError):",
+          "        return",
+          "    if isinstance(loaded, list) and loaded:",
+          "        messages = loaded"
+        ])
+      },
+      {
+        name: "Just before the greeting",
+        code: lines([
+          "load_memory()",
+          "print(\"JARVIS: Hello. I am online.\")"
+        ])
+      }
+    ],
+    where: "load_memory goes under save_memory. The call goes immediately above the greeting, still outside the loop.",
+    run: "python jarvis.py",
+    success: "A question about the previous run can use that earlier chat. If memory.json does not exist yet, JARVIS still starts normally.",
+    why: "global messages lets load_memory replace the list the rest of the file uses. A missing or broken file is ignored, so a bad save cannot stop the assistant from starting.",
+    help: [
+      "If the old chat is ignored, load_memory() is not being called, or it is indented inside the loop by mistake.",
+      "Delete memory.json if you want a fresh conversation. JARVIS will start with the system message again."
+    ]
+  },
+  {
+    id: "speak",
+    minutes: 6,
+    section: "Voice",
+    title: "Speak the reply",
+    optional: true,
+    building: "JARVIS reads the reply aloud. The text still prints if speech is unavailable.",
+    actions: [
+      "In the terminal, run pip install pyttsx3.",
+      "Add the say function below.",
+      "Where the loop prints the answer, call say(answer) instead.",
+      "Run JARVIS and type hello."
+    ],
+    snippets: [
+      { name: "Terminal, once", code: "pip install pyttsx3" },
+      {
+        name: "New function",
+        code: lines([
+          "def say(text):",
+          "    print(\"JARVIS:\", text)",
+          "    try:",
+          "        import pyttsx3",
+          "        engine = pyttsx3.init()",
+          "        engine.say(text)",
+          "        engine.runAndWait()",
+          "    except Exception:",
+          "        return"
+        ])
+      },
+      { name: "In the loop, replace the answer print", code: "    say(answer)" }
+    ],
+    where: "say can go under load_memory. Replace only the line print(\"JARVIS:\", answer). Leave the goodbye print as it is.",
+    run: "python jarvis.py",
+    success: "You still see JARVIS: At your service. If pyttsx3 installed, you should also hear it. Speech was not run while this tutorial was written.",
+    why: "pyttsx3 uses the Windows voice already on the computer. say prints first, then tries speech. If the install or the audio device fails, the text reply remains.",
+    help: [
+      "This step is optional. If pip fails, skip it. Later steps still work with print.",
+      "The first spoken line can pause for a moment while the voice engine starts.",
+      "pyttsx3 was not installed in the check for this tutorial, so hearing the voice is for you to confirm."
+    ]
+  },
+  {
+    id: "listen",
+    minutes: 6,
+    section: "Voice",
+    title: "Listen with the mic",
+    optional: true,
+    building: "A listen function that uses the microphone when it can, and the keyboard when it cannot.",
+    actions: [
+      "Try the two install commands. If either fails, skip this step.",
+      "Add listen under say.",
+      "In the loop, replace input(\"You: \").strip() with listen().",
+      "Run JARVIS. Speak after Listening, or type if it asks you to."
+    ],
+    snippets: [
+      { name: "Terminal", code: lines(["pip install SpeechRecognition", "pip install pyaudio"]) },
+      {
+        name: "New function",
+        code: lines([
+          "def listen():",
+          "    try:",
+          "        import speech_recognition as sr",
+          "    except ImportError:",
+          "        return input(\"You: \").strip()",
+          "    recognizer = sr.Recognizer()",
+          "    try:",
+          "        with sr.Microphone() as source:",
+          "            print(\"JARVIS: Listening...\")",
+          "            audio = recognizer.listen(source, timeout=5, phrase_time_limit=8)",
+          "        heard = recognizer.recognize_google(audio)",
+          "        print(\"You:\", heard)",
+          "        return heard",
+          "    except Exception:",
+          "        print(\"JARVIS: I could not hear that. Type instead.\")",
+          "        return input(\"You: \").strip()"
+        ])
+      },
+      { name: "First line inside the loop", code: "    command = listen()" }
+    ],
+    where: "Replace only the input line inside the loop. Everything after it still uses command.",
+    run: "python jarvis.py",
+    success: "Either JARVIS: Listening... and then your words, or the normal You: prompt. The microphone path was not run for this tutorial.",
+    why: "SpeechRecognition captures audio. recognize_google sends that audio to Google, so this part needs the internet. It is not a local model. The rest of JARVIS stays on your computer.",
+    help: [
+      "Python 3.14 may not have a ready PyAudio installer. If pip install pyaudio fails, leave the loop on input() and continue.",
+      "A timeout, a missing mic, or a failed install all fall back to typing.",
+      "Allow the microphone if Windows asks. This page never asks for the mic. Only jarvis.py can."
+    ]
+  },
+  {
+    id: "remind",
+    minutes: 5,
+    section: "Finish",
+    title: "Save a reminder",
+    building: "remind stores a note. reminders reads the notes back.",
+    actions: [
+      "Add the two functions below.",
+      "Put the two new tests in reply, above return None.",
+      "Update the help sentence so you can remember the new commands.",
+      "Run: remind buy milk, then reminders, then exit."
+    ],
+    snippets: [
+      {
+        name: "New functions",
+        code: lines([
+          "def add_reminder(note):",
+          "    with open(\"reminders.txt\", \"a\", encoding=\"utf-8\") as file:",
+          "        file.write(note + \"\\n\")",
+          "    return \"Reminder saved.\"",
+          "",
+          "def list_reminders():",
+          "    try:",
+          "        with open(\"reminders.txt\", encoding=\"utf-8\") as file:",
+          "            notes = file.read().strip()",
+          "    except FileNotFoundError:",
+          "        return \"No reminders yet.\"",
+          "    if notes == \"\":",
+          "        return \"No reminders yet.\"",
+          "    return notes"
+        ])
+      },
+      {
+        name: "Inside reply, above return None",
+        code: lines([
+          "    if parts and parts[0] == \"remind\":",
+          "        note = command.split(\" \", 1)",
+          "        if len(note) == 1 or note[1].strip() == \"\":",
+          "            return \"Say remind and then the note.\"",
+          "        return add_reminder(note[1].strip())",
+          "    if parts and parts[0] == \"reminders\":",
+          "        return list_reminders()"
+        ])
+      },
+      {
+        name: "Help line inside reply",
+        code: "        return \"Try hello, help, open notepad, open calc, remind, reminders, or exit.\""
+      }
+    ],
+    where: "The functions can go under open_app. The tests go inside reply, after the open test and before return None. parts already exists from the open step.",
+    run: "python jarvis.py",
+    success: lines([
+      "You: remind buy milk",
+      "JARVIS: Reminder saved.",
+      "You: reminders",
+      "JARVIS: buy milk"
+    ]),
+    why: "\"a\" adds to the file instead of wiping it. split(\" \", 1) separates the command from the rest of the sentence, so the note can contain spaces.",
+    help: [
+      "If remind reaches the model, the new tests are below return None or parts is not defined. Move them above return None.",
+      "reminders.txt appears in the project folder after the first saved note."
+    ]
+  },
+  {
+    id: "window",
+    minutes: 7,
+    section: "Finish",
+    title: "Add a small window",
+    building: "A second way to use the same functions, without deleting the terminal loop.",
+    actions: [
+      "Put the terminal loop inside main, using the wrapper below.",
+      "Create a new file, jarvis_window.py, and paste its code.",
+      "Run the window file. Type a message and press Enter.",
+      "python jarvis.py still runs the terminal version."
+    ],
+    snippets: [
+      {
+        name: "Bottom of jarvis.py",
+        code: lines([
+          "def main():",
+          "    load_memory()",
+          "    print(\"JARVIS: Hello. I am online.\")",
+          "    # Move your existing while True loop under here.",
+          "    # Indent the whole loop one more level.",
+          "",
+          "if __name__ == \"__main__\":",
+          "    main()"
+        ])
+      },
+      {
+        name: "jarvis_window.py",
+        code: lines([
+          "import jarvis",
+          "import tkinter as tk",
+          "",
+          "def on_send(event=None):",
+          "    command = entry.get().strip()",
+          "    entry.delete(0, tk.END)",
+          "    if command == \"\":",
+          "        return",
+          "    log.insert(tk.END, \"You: \" + command + \"\\n\")",
+          "    if command.lower() == \"exit\":",
+          "        log.insert(tk.END, \"JARVIS: Goodbye.\\n\")",
+          "        jarvis.save_memory()",
+          "        root.destroy()",
+          "        return",
+          "    answer = jarvis.reply(command)",
+          "    if answer is None:",
+          "        answer = jarvis.ask_model(command)",
+          "    log.insert(tk.END, \"JARVIS: \" + answer + \"\\n\\n\")",
+          "    log.see(tk.END)",
+          "",
+          "jarvis.load_memory()",
+          "root = tk.Tk()",
+          "root.title(\"JARVIS\")",
+          "root.geometry(\"420x520\")",
+          "log = tk.Text(root, height=20, wrap=\"word\")",
+          "log.pack(fill=\"both\", expand=True)",
+          "entry = tk.Entry(root)",
+          "entry.pack(fill=\"x\")",
+          "entry.bind(\"<Return>\", on_send)",
+          "entry.focus()",
+          "root.mainloop()"
+        ])
+      }
+    ],
+    where: "Move your real loop into main, in place of the pass line. Delete the old load_memory() and greeting that used to sit outside the loop, or they will run twice. if __name__ means the loop runs for python jarvis.py, and not when the window imports the file.",
+    run: "python jarvis_window.py",
+    success: "A window titled JARVIS. Typed text appears in the log, then a reply. exit closes the window. This window was not opened while the tutorial was written. tkinter is already included with this Python.",
+    why: "The window calls the same reply and ask_model functions. It does not contain a second copy of the assistant. A model reply can make the window wait. That wait is the model thinking, not a crash.",
+    help: [
+      "Do not paste the wrapper on top of the loop. Move the loop you already have under main, then delete the old copy that sits outside it.",
+      "If the terminal loop starts as soon as you open the window, the loop is not inside main, or the if __name__ lines are missing.",
+      "If the window says Not Responding during a question, wait. Do not close it yet.",
+      "The window shows text. It does not use the microphone or the speaker."
+    ]
+  },
+  {
+    id: "together",
+    minutes: 4,
+    section: "Finish",
+    title: "Run JARVIS",
+    building: "One pass through the assistant you have actually built.",
+    actions: [
+      "Run python jarvis.py from the project folder.",
+      "Type hello.",
+      "Type open calc, then close Calculator.",
+      "Ask a question in your own words.",
+      "Type remind call home, then reminders.",
+      "Type exit, run the file again, and ask what the reminder was."
+    ],
+    snippets: [],
+    where: "No new code. If a piece was skipped, that part of the test will not happen, and the rest should still run.",
+    run: "python jarvis.py",
+    success: lines([
+      "hello answers locally.",
+      "open calc opens Calculator, or tells you it is not allowed for any other name.",
+      "A normal question is answered by qwen3:8b.",
+      "reminders prints the note you saved.",
+      "After a restart, memory.json can supply the earlier model chat."
+    ]),
+    why: "reply handles commands on the computer. ask_model handles everything else and stores those turns. save_memory and load_memory keep the model chat in memory.json. say and listen are optional. The window is a second front door, not a second assistant.",
+    help: [
+      "main.py was never part of these steps. Leave it as your earlier chat loop.",
+      "The phone page cannot see whether Calculator opened or what the model said. Judge that from the Cursor terminal.",
+      "A full finished copy is not printed here on purpose. Your jarvis.py is the copy, built one step at a time."
+    ]
+  }
 ];
 
-// One card at a time. Older saves are read and never written.
-
-const PRACTICE_KEY = "pythonPractice.v1";
-const ACADEMY_KEY = "jarvisAcademy.v1";
-const RECALL_KEYS = ["pythonRecall.v3", "pythonRecall.v2", "pythonRecall.v1"];
-const FLASH_KEY = "pythonFlashcards.v1";
-
-const view = { more: false, sheet: false, topic: "", result: null };
-let progress = freshProgress();
-let legacy = { streaks: {}, flash: "" };
-let academy = { checks: {}, drafts: {}, early: false };
+let progress = { version: 1, place: 0, done: {} };
+let helpOpen = false;
+let sheetOpen = false;
 
 function browserStorage() {
   try {
@@ -1040,123 +839,31 @@ function browserStorage() {
   }
 }
 
-function freshProgress() {
-  return { version: 1, place: "", pathPlace: "s1", done: {}, drafts: {}, hints: {}, early: false };
-}
-
-function plainObject(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return value;
-}
-
 function loadProgress() {
   const store = browserStorage();
-  const raw = store ? store.getItem(PRACTICE_KEY) : null;
-  if (!raw) return freshProgress();
+  const raw = store ? store.getItem(KEY) : null;
+  const fresh = { version: 1, place: 0, done: {} };
+  if (!raw) return fresh;
   try {
     const data = JSON.parse(raw);
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("shape");
-    const next = freshProgress();
-    next.place = typeof data.place === "string" ? data.place : "";
-    next.pathPlace = typeof data.pathPlace === "string" && data.pathPlace ? data.pathPlace : "s1";
-    next.done = plainObject(data.done);
-    next.drafts = plainObject(data.drafts);
-    next.hints = plainObject(data.hints);
-    next.early = Boolean(data.early);
-    return next;
+    const place = Number(data.place);
+    fresh.place = place >= 0 && place < STEPS.length ? place : 0;
+    if (data.done && typeof data.done === "object" && !Array.isArray(data.done)) fresh.done = data.done;
+    return fresh;
   } catch (error) {
     try {
-      if (store && !store.getItem(PRACTICE_KEY + ".unreadable")) {
-        store.setItem(PRACTICE_KEY + ".unreadable", raw);
-      }
+      if (store && !store.getItem(KEY + ".unreadable")) store.setItem(KEY + ".unreadable", raw);
     } catch (ignored) {
       ignored;
     }
-    return freshProgress();
+    return fresh;
   }
 }
 
 function saveProgress() {
   const store = browserStorage();
-  if (store) store.setItem(PRACTICE_KEY, JSON.stringify(progress));
-}
-
-function loadLegacy() {
-  const streaks = {};
-  RECALL_KEYS.forEach((key) => {
-    try {
-      const store = browserStorage();
-      const data = JSON.parse((store && store.getItem(key)) || "null");
-      const box = data && data.streaks;
-      if (!box || typeof box !== "object") return;
-      Object.keys(box).forEach((id) => {
-        streaks[id] = Math.max(streaks[id] || 0, Number(box[id]) || 0);
-      });
-    } catch (error) {
-      streaks.kept = true;
-    }
-  });
-  let flash = "";
-  try {
-    const store = browserStorage();
-    const raw = store ? store.getItem(FLASH_KEY) : null;
-    if (raw) {
-      const data = JSON.parse(raw);
-      const box = data && typeof data === "object" ? (data.cards || data.progress || data) : null;
-      const count = box && typeof box === "object" ? Object.keys(box).length : 0;
-      flash = count
-        ? count + " older flashcard entries stay saved in this browser."
-        : "An older flashcard save stays in this browser.";
-    }
-  } catch (error) {
-    flash = "An older flashcard save stays in this browser.";
-  }
-  return { streaks: streaks, flash: flash };
-}
-
-function loadAcademy() {
-  const empty = { checks: {}, drafts: {}, early: false };
-  const store = browserStorage();
-  if (!store) return empty;
-  try {
-    const data = JSON.parse(store.getItem(ACADEMY_KEY) || "null");
-    if (!data || typeof data !== "object" || Array.isArray(data)) return empty;
-    return {
-      checks: data.checks && typeof data.checks === "object" ? data.checks : {},
-      drafts: data.drafts && typeof data.drafts === "object" ? data.drafts : {},
-      early: Boolean(data.earlySetsMarked)
-    };
-  } catch (error) {
-    return empty;
-  }
-}
-
-function academyPassed(id) {
-  const item = academy.checks[id];
-  return Boolean(item && (item.status === "built" || item.status === "skipped"));
-}
-
-function isDone(id) {
-  if (progress.done[id]) return true;
-  const mapped = { s1: "m1-input", s2: "m1-reply", s4: "m1-exit", s5: "m1-build", s6: "m1-debug" }[id];
-  if (mapped && academyPassed(mapped)) return true;
-  if (id.charAt(0) === "r") {
-    const number = Number(id.slice(1));
-    if ((progress.early || academy.early) && number <= 30) return true;
-    if ((Number(legacy.streaks[String(number)]) || 0) >= 2) return true;
-    if (academyPassed("p" + number)) return true;
-  }
-  return false;
-}
-
-function draftOf(id) {
-  if (typeof progress.drafts[id] === "string") return progress.drafts[id];
-  const mapped = { s1: "m1-input", s2: "m1-reply", s4: "m1-exit", s5: "m1-build", s6: "m1-debug" }[id];
-  if (mapped && typeof academy.drafts[mapped] === "string") return academy.drafts[mapped];
-  if (id.charAt(0) === "r" && typeof academy.drafts["p" + id.slice(1)] === "string") {
-    return academy.drafts["p" + id.slice(1)];
-  }
-  return "";
+  if (store) store.setItem(KEY, JSON.stringify(progress));
 }
 
 function esc(value) {
@@ -1169,683 +876,140 @@ function esc(value) {
   }[ch]));
 }
 
-function normalize(code) {
-  return String(code).replace(/\r\n/g, "\n").replace(/\t/g, "    ").split("\n").map((line) => line.trimEnd()).join("\n").trim();
-}
-
-function stripComments(code) {
-  return normalize(code).split("\n").map((line) => {
-    let quotes = 0;
-    for (let i = 0; i < line.length; i += 1) {
-      const ch = line[i];
-      if (ch === "\"" || ch === "'") quotes += 1;
-      if (ch === "#" && quotes % 2 === 0) return line.slice(0, i);
-    }
-    return line;
-  }).join("\n");
-}
-
-function fail(text) {
-  return { ok: false, text: text };
-}
-
-function pass(text) {
-  return { ok: true, text: text };
-}
-
-function copiedExample(code, example) {
-  if (!example) return false;
-  return normalize(code).replace(/'/g, "\"") === normalize(example).replace(/'/g, "\"");
-}
-
-function checkInput(code) {
-  const n = stripComments(code);
-  if (!n) return fail("Write the line first.");
-  if (/title\s*=\s*input/i.test(n) || copiedExample(code, "title = input(\"Title: \")")) {
-    return fail("That copies the example. Store the line in command.");
-  }
-  if (!/command\s*=\s*input\s*\(\s*["']You: ["']\s*\)(?:\.strip\(\s*\))?/.test(n)) {
-    if (!/command\s*=/.test(n)) return fail("Store the result in command.");
-    if (!/input\s*\(/.test(n)) return fail("Call input to read the line.");
-    return fail("The prompt should be You: with a space before the quote ends.");
-  }
-  return pass("You can read a command. JARVIS asks this every turn. Python was not run.");
-}
-
-function checkReply(code) {
-  const n = stripComments(code);
-  if (!n) return fail("Write the test first.");
-  if (/password|Door unlocked/i.test(n)) return fail("That copies the door. Test command, and answer as JARVIS.");
-  if (!/if\s+command(?:\.strip\(\s*\))?(?:\.lower\(\s*\))?\s*==\s*["']hello["']\s*:/.test(n)) {
-    return fail("Use if, compare command with hello, and end that line with a colon.");
-  }
-  if (!/At your service/.test(n)) return fail("The reply should include At your service.");
-  if (!/^[ \t]+print/m.test(n)) return fail("Indent the print line with four spaces.");
-  return pass("You can answer hello. JARVIS uses if to choose a reply. Python was not run.");
-}
-
-function checkExit(code) {
-  const n = stripComments(code);
-  if (!n) return fail("Write the exit test first.");
-  if (/Survey closed|answer\.lower/.test(n)) return fail("That copies the survey. Test command, and say Goodbye.");
-  if (!/\.lower\s*\(\s*\)/.test(n) || !/["']exit["']/.test(n)) return fail("Compare command.lower() with exit.");
-  if (!/Goodbye/.test(n)) return fail("Print a line that includes Goodbye.");
-  if (!/^[ \t]+break/m.test(n)) return fail("Indent break under the exit test. Printing goodbye does not stop a loop.");
-  return pass("You can stop the loop. JARVIS uses break when the person says exit. Python was not run.");
-}
-
-function checkLoop(code) {
-  const n = stripComments(code);
-  if (!n) return fail("Write the loop first.");
-  if (/Order:|Noted|Closed/.test(n)) return fail("That copies the cafe. Use You: and JARVIS replies.");
-  if (!/while\s+True\s*:/.test(n)) return fail("Start with while True:.");
-  if (!/command\s*=\s*input\s*\(\s*["']You: ["']\s*\)(?:\.strip\(\s*\))?/.test(n)) return fail("Inside the loop, ask with You: and store command.");
-  if (!/\.lower\s*\(\s*\)/.test(n) || !/["']exit["']/.test(n)) return fail("Match exit with .lower(), so Exit counts too.");
-  if (!/Goodbye/.test(n) || !/^[ \t]+break/m.test(n)) return fail("On exit, print Goodbye and indent break under that test.");
-  if (!/["']hello["']/.test(n) || !/At your service/.test(n)) return fail("On hello, print At your service.");
-  if (!/\belse\b/.test(n) || !/I heard you/.test(n)) return fail("Use else to print JARVIS: I heard you.");
-  return pass("You have the basic loop. Python was not run.");
-}
-
-function checkReplyFn(code) {
-  const n = stripComments(code);
-  if (!n) return fail("Write the function first.");
-  if (/def\s+label\s*\(|Item:/.test(n)) return fail("That copies the label. Define reply, and return JARVIS lines.");
-  if (!/def\s+reply\s*\(\s*command\s*\)\s*:/.test(n)) return fail("Define reply(command), and end that line with a colon.");
-  if (!/^[ \t]+return/m.test(n)) return fail("Indent return under the function.");
-  if (!/\.lower\s*\(\s*\)/.test(n) || !/["']hello["']/.test(n)) return fail("Test command.lower() against hello.");
-  if (!/At your service/.test(n)) return fail("Return a line that includes At your service.");
-  if (!/\belse\b/.test(n) || !/I heard you/.test(n)) return fail("Use else to return JARVIS: I heard you.");
-  return pass("You can return a reply. The loop can print reply(command). Python was not run.");
-}
-
-function checkChoice(picked, answer, wrong, success) {
-  if (!picked) return fail("Choose one.");
-  if (picked !== answer) return fail(wrong);
-  return pass(success);
-}
-
-function reviewCheck(code, lesson) {
-  const got = normalize(code).replace(/'/g, "\"");
-  if (!got) return fail("Write the task first.");
-  if (got === normalize(lesson.example).replace(/'/g, "\"")) return fail("That copies the example. Use the words in the task.");
-  const need = normalize(lesson.code).replace(/'/g, "\"");
-  if (got === need) return pass("That matches. Python was not run.");
-  const gotLines = got.split("\n");
-  const needLines = need.split("\n");
-  const length = Math.max(gotLines.length, needLines.length);
-  for (let i = 0; i < length; i += 1) {
-    if (gotLines[i] !== needLines[i]) return fail("Line " + (i + 1) + " does not match the task yet.");
-  }
-  return fail("Not the task yet.");
-}
-
-function reviewHints(lesson) {
-  const lines = lesson.code.split("\n");
-  const word = lines[0].split(/[\s(]/)[0];
-  return [
-    "Use the words in the task. The example uses different ones.",
-    "You need " + lines.length + (lines.length === 1 ? " line." : " lines."),
-    "Start with " + word + "."
-  ];
-}
-
-function lines(list) {
-  return list.join("\n");
-}
-
-const STEPS = [
-  {
-    id: "s1",
-    kind: "write",
-    kicker: "Reading input",
-    title: "Read a command",
-    explain: "input() reads one line from the person. Store that line in a variable.",
-    more: "The words in quotes are the prompt. They are shown first. The variable receives what the person types.",
-    example: "title = input(\"Title: \")",
-    exampleNote: "A library desk. Your prompt asks for a command.",
-    task: "Store the line in command. The prompt is You: with a space before the quote ends.",
-    hints: [
-      "The variable is command, not title.",
-      "Call input, and put the prompt in quotes.",
-      "command = input(\"You: \")"
-    ],
-    learned: "You can read a command.",
-    check: checkInput
-  },
-  {
-    id: "s2",
-    kind: "write",
-    kicker: "Decisions",
-    title: "Answer hello",
-    explain: "if runs the indented line only when the test is true. End the test with a colon.",
-    more: "Four spaces show that the next line belongs to the if.",
-    example: lines(["if password == \"open\":", "    print(\"Door unlocked\")"]),
-    exampleNote: "A door, not the assistant.",
-    task: "If command is hello, print JARVIS: At your service.",
-    hints: [
-      "Compare command with hello.",
-      "End the if line with a colon, then indent print.",
-      "The printed text includes At your service."
-    ],
-    learned: "You can answer hello.",
-    check: checkReply
-  },
-  {
-    id: "s3",
-    kind: "choice",
-    kicker: "Predict",
-    title: "Which line prints?",
-    explain: "else runs when the if test is false. Only one branch prints.",
-    example: lines([
-      "command = \"hello\"",
-      "if command == \"exit\":",
-      "    print(\"Goodbye\")",
-      "else:",
-      "    print(\"Still here\")"
-    ]),
-    exampleNote: "Read this. What appears?",
-    choices: ["Goodbye", "Still here", "Both lines"],
-    answer: "Still here",
-    hints: [
-      "command is hello.",
-      "The if looks for exit.",
-      "else prints Still here."
-    ],
-    learned: "else is the backup reply.",
-    wrong: "Only one branch runs.",
-    success: "else is the backup. JARVIS uses it for a command it does not know."
-  },
-  {
-    id: "s4",
-    kind: "write",
-    kicker: "Loops",
-    title: "Leave the loop",
-    explain: "break leaves a loop. .lower() lets Exit and EXIT match exit.",
-    more: "A goodbye message does not stop the loop by itself.",
-    example: lines([
-      "if answer.lower() == \"n\":",
-      "    print(\"Survey closed\")",
-      "    break"
-    ]),
-    exampleNote: "A survey. Yours looks for exit.",
-    task: "If command.lower() is exit, print JARVIS: Goodbye. and then break.",
-    hints: [
-      "Call .lower() on command.",
-      "Print a line that includes Goodbye.",
-      "Put break on the next indented line."
-    ],
-    learned: "You can stop the loop.",
-    check: checkExit
-  },
-  {
-    id: "s5",
-    kind: "write",
-    kicker: "Build",
-    title: "The assistant",
-    explain: "Ask, answer, then ask again, until the person says exit.",
-    more: "Indent the lines inside the loop. Indent again inside if, elif, and else.",
-    example: lines([
-      "while True:",
-      "    item = input(\"Order: \")",
-      "    if item == \"done\":",
-      "        print(\"Closed\")",
-      "        break",
-      "    else:",
-      "        print(\"Noted\")"
-    ]),
-    exampleNote: "A cafe closes. Your loop is the assistant.",
-    task: "Prompt with You: . exit in any caps prints JARVIS: Goodbye. and breaks. hello prints JARVIS: At your service. Anything else prints JARVIS: I heard you.",
-    hints: [
-      "Start with while True: and read command inside it.",
-      "The exit branch needs .lower() and break.",
-      "Use else for JARVIS: I heard you."
-    ],
-    learned: "You have the basic command loop.",
-    after: "To see it, save this as assistant.py and run python assistant.py on your computer. Leave main.py alone.",
-    check: checkLoop
-  },
-  {
-    id: "s6",
-    kind: "write",
-    kicker: "Debugging",
-    title: "Fix the loop",
-    explain: "Exit will not match Exit, and the last print runs every time.",
-    more: "Use .lower() and break for exit. Answer hello. Put the other reply under else.",
-    task: "Change the code so those two bugs are gone, and hello gets an answer.",
-    seed: lines([
-      "while True:",
-      "    command = input(\"You: \")",
-      "    if command == \"exit\":",
-      "        print(\"JARVIS: Goodbye.\")",
-      "    print(\"JARVIS: I heard you.\")"
-    ]),
-    hints: [
-      "command == \"exit\" misses Exit. Call .lower().",
-      "break has to be indented under the exit test.",
-      "The fallback belongs under else, after a hello branch."
-    ],
-    learned: "You can repair the stop and the fallback.",
-    check: checkLoop
-  },
-  {
-    id: "s7",
-    kind: "choice",
-    kicker: "Predict",
-    title: "Two turns",
-    explain: "Capitals matter on a test that does not use .lower().",
-    example: lines([
-      "while True:",
-      "    command = input(\"You: \")",
-      "    if command.lower() == \"exit\":",
-      "        print(\"JARVIS: Goodbye.\")",
-      "        break",
-      "    elif command == \"hello\":",
-      "        print(\"JARVIS: At your service.\")",
-      "    else:",
-      "        print(\"JARVIS: I heard you.\")"
-    ]),
-    exampleNote: "The person types Hello, then exit.",
-    choices: [
-      "At your service, then Goodbye",
-      "I heard you, then Goodbye",
-      "Only Goodbye"
-    ],
-    answer: "I heard you, then Goodbye",
-    hints: [
-      "The hello test does not use .lower().",
-      "Hello fails that test, so else runs.",
-      "exit matches next, then the loop stops."
-    ],
-    learned: "A hello test can miss Hello.",
-    wrong: "Look at which test uses .lower().",
-    success: "Hello missed the hello test. exit matched because of .lower()."
-  },
-  {
-    id: "s8",
-    kind: "write",
-    kicker: "Functions",
-    title: "Return a reply",
-    explain: "return sends text back. The function does not have to print it.",
-    more: "The loop can print that text later.",
-    example: lines(["def label(word):", "    return \"Item: \" + word"]),
-    exampleNote: "A label maker. Yours answers the person.",
-    task: "Define reply(command). If command.lower() is hello, return JARVIS: At your service. Otherwise return JARVIS: I heard you.",
-    hints: [
-      "def reply(command):",
-      "Use return, not print.",
-      "else returns the I heard you line."
-    ],
-    learned: "You can return a reply from a function.",
-    check: checkReplyFn
-  }
-];
-
-function endItem() {
-  const learned = STEPS.filter((step) => isDone(step.id)).map((step) => step.learned);
-  return {
-    id: "end",
-    kind: "end",
-    kicker: "So far",
-    title: learned.length ? "What you can do" : "Nothing checked yet",
-    explain: learned.length
-      ? "These are the steps you actually passed. Next alone does not count."
-      : "Go back and check a step. Moving ahead does not mark it done.",
-    learnedList: learned
-  };
-}
-
-function niceTitle(title) {
-  const short = title.replace(/^This is how to /, "");
-  return short.charAt(0).toUpperCase() + short.slice(1);
-}
-
-function reviewItem(lesson) {
-  return {
-    id: "r" + lesson.id,
-    kind: "write",
-    topic: lesson.topic,
-    kicker: lesson.topic,
-    title: niceTitle(lesson.title),
-    explain: lesson.explain,
-    example: lesson.example,
-    exampleNote: lesson.shown ? "Example prints: " + lesson.shown : "Different values from the task.",
-    task: lesson.task,
-    hints: reviewHints(lesson),
-    learned: "Done.",
-    check: (code) => reviewCheck(code, lesson)
-  };
-}
-
 function current() {
-  if (progress.place === "end") return endItem();
-  const step = STEPS.find((item) => item.id === progress.place);
-  if (step) return step;
-  if (progress.place && progress.place.charAt(0) === "r") {
-    const lesson = LESSONS.find((item) => "r" + item.id === progress.place);
-    if (lesson) return reviewItem(lesson);
-  }
-  return STEPS[0];
+  return STEPS[progress.place] || STEPS[0];
 }
 
-function neighbors(id) {
-  if (id === "end") return { prev: STEPS[STEPS.length - 1].id, next: "" };
-  const stepIndex = STEPS.findIndex((item) => item.id === id);
-  if (stepIndex >= 0) {
-    return {
-      prev: stepIndex > 0 ? STEPS[stepIndex - 1].id : "",
-      next: stepIndex < STEPS.length - 1 ? STEPS[stepIndex + 1].id : "end"
-    };
-  }
-  const index = LESSONS.findIndex((item) => "r" + item.id === id);
-  const practice = progress.pathPlace || "s1";
-  if (index >= 0) {
-    return {
-      prev: index > 0 ? "r" + LESSONS[index - 1].id : practice,
-      next: index < LESSONS.length - 1 ? "r" + LESSONS[index + 1].id : practice
-    };
-  }
-  return { prev: "", next: "s2" };
+function isDone(id) {
+  return Boolean(progress.done[id]);
 }
 
-function position(item) {
-  if (item.id === "end") {
-    const done = STEPS.filter((step) => isDone(step.id)).length;
-    return { label: done + " passed", value: done, total: STEPS.length };
-  }
-  const stepIndex = STEPS.findIndex((step) => step.id === item.id);
-  if (stepIndex >= 0) return { label: (stepIndex + 1) + " / " + STEPS.length, value: stepIndex + 1, total: STEPS.length };
-  const lesson = LESSONS.find((entry) => "r" + entry.id === item.id);
-  const group = LESSONS.filter((entry) => entry.topic === (lesson ? lesson.topic : ""));
-  const index = group.findIndex((entry) => lesson && entry.id === lesson.id);
-  return { label: (index + 1) + " / " + group.length, value: index + 1, total: group.length || 1 };
-}
-
-function firstOpenStep() {
-  const next = STEPS.find((step) => !isDone(step.id));
-  return next ? next.id : "end";
-}
-
-function go(id) {
-  if (!id) return;
-  progress.place = id;
-  if (id.charAt(0) === "s") progress.pathPlace = id;
-  view.more = false;
-  view.sheet = false;
-  view.result = null;
+function go(index) {
+  if (index < 0 || index >= STEPS.length) return;
+  progress.place = index;
+  helpOpen = false;
+  sheetOpen = false;
   saveProgress();
   render();
 }
 
-function topics() {
-  const list = [];
-  LESSONS.forEach((lesson) => {
-    let group = null;
-    for (let i = 0; i < list.length; i += 1) {
-      if (list[i].name === lesson.topic) group = list[i];
-    }
-    if (!group) {
-      group = { name: lesson.topic, ids: [] };
-      list.push(group);
-    }
-    group.ids.push(lesson.id);
-  });
-  return list;
+function markDone() {
+  progress.done[current().id] = true;
+  saveProgress();
+  render();
 }
 
-function earlyOpen() {
-  return LESSONS.slice(0, 30).some((lesson) => !isDone("r" + lesson.id));
+function listHtml(items, ordered) {
+  const tag = ordered ? "ol" : "ul";
+  return "<" + tag + ">" + items.map((item) => "<li>" + esc(item) + "</li>").join("") + "</" + tag + ">";
 }
 
-function renderSheet() {
-  const here = current().id;
-  const practice = STEPS.map((step) => {
+function snippetHtml(snippet) {
+  return "<div class=\"codebox\"><div class=\"codehead\"><span>" + esc(snippet.name) + "</span><button type=\"button\" data-act=\"copy\">Copy</button></div><pre>" + esc(snippet.code) + "</pre></div>";
+}
+
+function sheetHtml() {
+  let section = "";
+  const rows = STEPS.map((step, index) => {
+    let label = "";
+    if (step.section !== section) {
+      section = step.section;
+      label = "<p class=\"section\">" + esc(section) + "</p>";
+    }
     const tick = isDone(step.id) ? "<span class=\"tick\">Done</span>" : "";
-    const currentAttr = step.id === here ? " aria-current=\"true\"" : "";
-    return "<button type=\"button\" class=\"jump\" data-act=\"go\" data-go=\"" + step.id + "\"" + currentAttr + "><span>" + esc(step.title) + "</span>" + tick + "</button>";
+    const currentAttr = index === progress.place ? " aria-current=\"true\"" : "";
+    return label + "<button type=\"button\" class=\"jump\" data-act=\"go\" data-go=\"" + index + "\"" + currentAttr + "><span>" + (index + 1) + ". " + esc(step.title) + "</span>" + tick + "</button>";
   }).join("");
-  const review = topics().map((group) => {
-    const done = group.ids.filter((id) => isDone("r" + id)).length;
-    const open = view.topic === group.name;
-    const head = "<button type=\"button\" class=\"jump\" data-act=\"topic\" data-topic=\"" + esc(group.name) + "\"><span>" + esc(group.name) + "</span><span>" + done + "/" + group.ids.length + "</span></button>";
-    if (!open) return head;
-    const items = group.ids.map((id) => {
-      const lesson = LESSONS.find((entry) => entry.id === id);
-      const tick = isDone("r" + id) ? "<span class=\"tick\">Done</span>" : "";
-      const currentAttr = "r" + id === here ? " aria-current=\"true\"" : "";
-      return "<button type=\"button\" class=\"jump sub\" data-act=\"go\" data-go=\"r" + id + "\"" + currentAttr + "><span>" + esc(niceTitle(lesson.title)) + "</span>" + tick + "</button>";
-    }).join("");
-    return head + items;
-  }).join("");
-  const mark = earlyOpen() ? "<button type=\"button\" class=\"mark\" data-act=\"early\">Mark first 3 topics done</button>" : "";
-  const flash = legacy.flash ? "<p class=\"flash\">" + esc(legacy.flash) + "</p>" : "";
-  return "<div class=\"sheet\"><div class=\"panel\"><div class=\"handle\"></div><h2>Lessons</h2><p class=\"section\">Practice</p>" + practice + "<p class=\"section\">Review</p>" + review + mark + flash + "</div></div>";
-}
-
-function cardBody(item) {
-  if (item.kind === "end") {
-    const list = item.learnedList.length
-      ? item.learnedList.map((line) => "<p class=\"learned\">" + esc(line) + "</p>").join("")
-      : "";
-    return "<h2>" + esc(item.title) + "</h2><p class=\"lead\">" + esc(item.explain) + "</p>" + list;
-  }
-  const more = item.more ? "<button type=\"button\" class=\"more\" data-act=\"more\">" + (view.more ? "Less" : "More") + "</button>" + (view.more ? "<p class=\"extra\">" + esc(item.more) + "</p>" : "") : "";
-  const learned = isDone(item.id) ? "<p class=\"learned\">" + esc(item.learned) + "</p>" : "";
-  const example = item.example ? "<p class=\"label\">Example</p><pre>" + esc(item.example) + "</pre>" + (item.exampleNote ? "<p class=\"note\">" + esc(item.exampleNote) + "</p>" : "") : "";
-  const task = item.task ? "<p class=\"task\">" + esc(item.task) + "</p>" : "";
-  const used = Number(progress.hints[item.id]) || 0;
-  const hints = (item.hints || []).slice(0, used).map((hint) => "<p class=\"hint\">" + esc(hint) + "</p>").join("");
-  const after = item.after && isDone(item.id) ? "<p class=\"after\">" + esc(item.after) + "</p>" : "";
-  let choices = "";
-  if (item.kind === "choice") {
-    const picked = draftOf(item.id);
-    choices = item.choices.map((choice) => {
-      const pressed = picked === choice ? " aria-pressed=\"true\"" : " aria-pressed=\"false\"";
-      return "<button type=\"button\" class=\"choice\" data-act=\"choice\" data-choice=\"" + esc(choice) + "\"" + pressed + ">" + esc(choice) + "</button>";
-    }).join("");
-  }
-  return learned + "<h2>" + esc(item.title) + "</h2><p class=\"lead\">" + esc(item.explain) + "</p>" + more + example + task + choices + hints + after;
-}
-
-function keysHtml(item) {
-  if (!item || item.kind !== "write") return "";
-  const keys = [
-    ["()", "Parentheses"],
-    ["[]", "Brackets"],
-    ["{}", "Braces"],
-    [":", "Colon"],
-    ["=", "Equals"],
-    ["\"", "Quote"],
-    ["#", "Comment"],
-    ["indent", "Indent"],
-    ["outdent", "Unindent"]
-  ];
-  return "<div class=\"keys\">" + keys.map((pair) => {
-    const label = pair[0] === "indent" || pair[0] === "outdent" ? pair[1] : pair[0];
-    return "<button type=\"button\" data-ins=\"" + esc(pair[0]) + "\" aria-label=\"" + esc(pair[1]) + "\">" + esc(label) + "</button>";
-  }).join("") + "</div>";
+  return "<div class=\"sheet\"><div class=\"panel\"><div class=\"handle\"></div><h2>Steps</h2>" + rows + "</div></div>";
 }
 
 function render() {
   const app = document.getElementById("app");
   if (!app) return;
-  const item = current();
-  const spot = position(item);
-  const near = neighbors(item.id);
-  const width = Math.max(0, Math.min(100, Math.round((spot.value / spot.total) * 100)));
-  const doneMark = item.id !== "end" && isDone(item.id) ? " · Done" : "";
-  const feedback = view.result ? "<p class=\"feedback " + (view.result.ok ? "good" : "bad") + "\">" + esc(view.result.text) + "</p>" : "<p class=\"feedback\"></p>";
-  const actions = item.kind === "end"
-    ? "<div class=\"actions\"><button type=\"button\" class=\"primary only\" data-act=\"open-sheet\">Review</button></div>"
-    : "<div class=\"actions\"><button type=\"button\" data-act=\"hint\">Hint</button><button type=\"button\" class=\"primary\" data-act=\"check\">Check</button><button type=\"button\" data-act=\"next\">Next</button></div>";
-  const editor = item.kind === "write"
-    ? "<textarea id=\"code\" aria-label=\"Your code\" spellcheck=\"false\" autocapitalize=\"off\" autocomplete=\"off\" autocorrect=\"off\"></textarea>"
-    : "";
+  const step = current();
+  const index = STEPS.indexOf(step);
+  const width = Math.round(((index + 1) / STEPS.length) * 100);
+  const optional = step.optional ? " · Optional" : "";
+  const marked = isDone(step.id) ? " · Done" : "";
+  const snippets = (step.snippets || []).map(snippetHtml).join("");
+  const parts = step.parts ? "<p class=\"label\">Important parts</p>" + listHtml(step.parts, false) : "";
+  const help = helpOpen ? "<ul class=\"help\">" + step.help.map((item) => "<li>" + esc(item) + "</li>").join("") + "</ul>" : "";
   app.innerHTML = "<main class=\"wrap\">" +
-    "<header class=\"top\"><button type=\"button\" class=\"text\" data-act=\"back\"" + (near.prev ? "" : " disabled") + ">Back</button><h1>Python Practice</h1><button type=\"button\" class=\"text lessons\" data-act=\"open-sheet\">Lessons</button></header>" +
-    "<div class=\"meta\"><span>" + esc(item.kicker) + doneMark + "</span><span>" + esc(spot.label) + "</span></div>" +
+    "<header class=\"top\"><h1>JARVIS Builder</h1><button type=\"button\" class=\"ghost\" data-act=\"sheet\">Steps</button></header>" +
+    "<p class=\"phone\">Write this on your computer, in Cursor.</p>" +
+    "<div class=\"meta\"><span>" + esc(step.section + " · " + step.minutes + " min" + optional + marked) + "</span><span>" + (index + 1) + " / " + STEPS.length + "</span></div>" +
     "<div class=\"progress\"><span style=\"width:" + width + "%\"></span></div>" +
-    "<article class=\"card\">" + cardBody(item) + editor + "</article></main>" +
-    "<div class=\"dock\">" + feedback + keysHtml(item) + actions + "</div>" +
-    (view.sheet ? renderSheet() : "");
-  const box = document.getElementById("code");
-  if (box) box.value = draftOf(item.id) || item.seed || "";
-  liftDock();
+    "<article><h2>" + esc(step.title) + "</h2><p class=\"lead\">" + esc(step.building) + "</p>" +
+    "<p class=\"label\">Do this</p>" + listHtml(step.actions, true) +
+    snippets + parts +
+    "<p class=\"label\">Where</p><p>" + esc(step.where) + "</p>" +
+    "<p class=\"label\">Run</p><div class=\"codebox\"><div class=\"codehead\"><span>Terminal</span><button type=\"button\" data-act=\"copy\">Copy</button></div><pre>" + esc(step.run) + "</pre></div>" +
+    "<p class=\"label\">You should see</p><div class=\"sample\"><pre>" + esc(step.success) + "</pre></div>" +
+    "<p class=\"why\">" + esc(step.why) + "</p>" +
+    "<button type=\"button\" class=\"help-toggle\" data-act=\"help\">" + (helpOpen ? "Hide help" : "Help") + "</button>" + help +
+    "</article></main>" +
+    "<div class=\"dock\">" +
+    "<button type=\"button\" data-act=\"prev\"" + (index === 0 ? " disabled" : "") + ">Previous</button>" +
+    "<button type=\"button\" class=\"primary\" data-act=\"done\"" + (isDone(step.id) ? " disabled" : "") + ">" + (isDone(step.id) ? "Completed" : "Mark complete") + "</button>" +
+    "<button type=\"button\" data-act=\"next\"" + (index === STEPS.length - 1 ? " disabled" : "") + ">Next</button>" +
+    "</div>" +
+    (sheetOpen ? sheetHtml() : "");
+  const dock = document.querySelector(".dock");
+  const wrap = document.querySelector(".wrap");
+  if (dock && wrap) wrap.style.paddingBottom = (dock.offsetHeight + 16) + "px";
 }
 
-function grade() {
-  const item = current();
-  if (item.kind === "end") return;
-  const box = document.getElementById("code");
-  const value = box ? box.value : draftOf(item.id);
-  if (box) progress.drafts[item.id] = value;
-  const outcome = item.kind === "choice"
-    ? checkChoice(value, item.answer, item.wrong, item.success)
-    : item.check(value);
-  if (outcome.ok) progress.done[item.id] = true;
-  else if (isDone(item.id)) {
-    outcome.text = outcome.text + " Your earlier pass stays saved.";
-  }
-  view.result = outcome;
-  saveProgress();
-  render();
-}
-
-function showHint() {
-  const item = current();
-  if (!item.hints) return;
-  const used = Number(progress.hints[item.id]) || 0;
-  if (used < item.hints.length) progress.hints[item.id] = used + 1;
-  saveProgress();
-  render();
-}
-
-function insertAt(kind) {
-  const box = document.getElementById("code");
-  if (!box) return;
-  const start = box.selectionStart;
-  const end = box.selectionEnd;
-  const selected = box.value.slice(start, end);
-  const pairs = { "()": ")", "[]": "]", "{}": "}", "\"": "\"" };
-  if (kind === "indent" || kind === "outdent") {
-    const lineStart = box.value.lastIndexOf("\n", start - 1) + 1;
-    const lineEnd = box.value.indexOf("\n", end);
-    const endPos = lineEnd === -1 ? box.value.length : lineEnd;
-    const next = box.value.slice(lineStart, endPos).split("\n").map((line) => {
-      return kind === "indent" ? "    " + line : line.replace(/^ {1,4}/, "");
-    }).join("\n");
-    box.setRangeText(next, lineStart, endPos, "end");
-  } else if (pairs[kind]) {
-    box.setRangeText(kind.charAt(0) + selected + pairs[kind], start, end, "end");
-    const cursor = selected ? start + selected.length + 2 : start + 1;
-    box.selectionStart = box.selectionEnd = cursor;
+function copyText(text, button) {
+  const done = () => {
+    const old = button.textContent;
+    button.textContent = "Copied";
+    setTimeout(() => { button.textContent = old; }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
   } else {
-    box.setRangeText(kind, start, end, "end");
+    fallbackCopy(text, done);
   }
-  progress.drafts[current().id] = box.value;
-  view.result = null;
-  saveProgress();
-  const feedback = document.querySelector(".feedback");
-  if (feedback) {
-    feedback.textContent = "";
-    feedback.className = "feedback";
-  }
-  box.focus();
+}
+
+function fallbackCopy(text, done) {
+  const area = document.createElement("textarea");
+  area.value = text;
+  document.body.appendChild(area);
+  area.select();
+  try { document.execCommand("copy"); } catch (error) { error; }
+  area.remove();
+  done();
 }
 
 function onClick(event) {
-  const ins = event.target.closest("[data-ins]");
-  if (ins) {
-    insertAt(ins.getAttribute("data-ins"));
-    return;
-  }
   if (event.target.classList && event.target.classList.contains("sheet")) {
-    view.sheet = false;
+    sheetOpen = false;
     render();
     return;
   }
   const el = event.target.closest("[data-act]");
   if (!el || el.disabled) return;
   const act = el.getAttribute("data-act");
-  if (act === "hint") showHint();
-  else if (act === "check") grade();
-  else if (act === "next") go(neighbors(current().id).next);
-  else if (act === "back") go(neighbors(current().id).prev);
-  else if (act === "go") go(el.getAttribute("data-go"));
-  else if (act === "open-sheet") {
-    const item = current();
-    view.sheet = true;
-    if (item.topic) view.topic = item.topic;
+  if (act === "copy") {
+    const pre = el.parentElement.parentElement.querySelector("pre");
+    if (pre) copyText(pre.textContent, el);
+  } else if (act === "next") go(progress.place + 1);
+  else if (act === "prev") go(progress.place - 1);
+  else if (act === "done") markDone();
+  else if (act === "help") {
+    helpOpen = !helpOpen;
     render();
-  } else if (act === "topic") {
-    const name = el.getAttribute("data-topic");
-    view.topic = view.topic === name ? "" : name;
+  } else if (act === "sheet") {
+    sheetOpen = true;
     render();
-  } else if (act === "more") {
-    view.more = !view.more;
-    render();
-  } else if (act === "choice") {
-    const item = current();
-    progress.drafts[item.id] = el.getAttribute("data-choice");
-    view.result = null;
-    saveProgress();
-    render();
-  } else if (act === "early") {
-    progress.early = true;
-    saveProgress();
-    render();
-  }
-}
-
-function onKey(event) {
-  if (event.target.id !== "code" || event.key !== "Tab") return;
-  event.preventDefault();
-  insertAt(event.shiftKey ? "outdent" : "indent");
-}
-
-function onInput(event) {
-  if (event.target.id !== "code") return;
-  progress.drafts[current().id] = event.target.value;
-  view.result = null;
-  const feedback = document.querySelector(".feedback");
-  if (feedback) {
-    feedback.textContent = "";
-    feedback.className = "feedback";
-  }
-  saveProgress();
-}
-
-function liftDock() {
-  const dock = document.querySelector(".dock");
-  const wrap = document.querySelector(".wrap");
-  if (!dock || !wrap) return;
-  const viewport = window.visualViewport;
-  const overlap = viewport ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop) : 0;
-  dock.style.bottom = overlap + "px";
-  wrap.style.paddingBottom = (dock.offsetHeight + 16) + "px";
+  } else if (act === "go") go(Number(el.getAttribute("data-go")));
 }
 
 function boot() {
   progress = loadProgress();
-  legacy = loadLegacy();
-  academy = loadAcademy();
-  if (!progress.place) {
-    progress.place = firstOpenStep();
-    if (progress.place.charAt(0) === "s") progress.pathPlace = progress.place;
-    saveProgress();
-  }
   const app = document.getElementById("app");
   app.addEventListener("click", onClick);
-  app.addEventListener("keydown", onKey);
-  app.addEventListener("input", onInput);
-  app.addEventListener("mousedown", (event) => {
-    if (event.target.closest("[data-ins]")) event.preventDefault();
-  });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", liftDock);
-    window.visualViewport.addEventListener("scroll", liftDock);
-  }
-  window.addEventListener("resize", liftDock);
   render();
 }
 
